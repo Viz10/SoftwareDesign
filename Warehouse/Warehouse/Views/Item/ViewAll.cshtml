@@ -1,0 +1,33 @@
+﻿
+@{
+    ViewData["Title"] = "Product Page";
+}
+
+@model IEnumerable<Item>
+
+<div>
+    <table class="table-bordered">
+        <thead>
+            <tr>Name</tr>
+            <tr>Description</tr>
+        </thead>
+        <tbody>
+            @foreach(var item in Model)
+            {
+                <tr>
+                    <td>
+                        @item.Id
+                    </td>
+                    <td>
+                        @item.Name
+                    </td>
+                    <td>
+                        @item.Description
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+
