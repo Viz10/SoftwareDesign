@@ -17,8 +17,8 @@ namespace Warehouse.Data.DbRepository
 
             item.HasIndex(x => x.Name).IsUnique().HasFilter("[IsDeleted] = 0");
             item.HasData(new Item {Id=1, Name = "TV", Description = "OLED SAMSUNG TV" }, new Item {Id=2, Name = "Gaming Monitor", Description = "240Hz Asus" });
-            item.Property(p => p.LastModifiedTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");  
-
+            item.Property(p => p.LastModifiedTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
+            item.Property(p => p.PricePerItem).HasColumnType("decimal(18,2)");
         }
     }
 }

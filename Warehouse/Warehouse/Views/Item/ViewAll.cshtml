@@ -5,11 +5,15 @@
 
 @model IEnumerable<Item>
 
-<div>
-    <table class="table-bordered">
+<div class="mt-4 mb-4">
+    <table class="table-group-stripped ">
         <thead>
-            <tr>Name</tr>
-            <tr>Description</tr>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>PricePerItem</th>
+                <th>Description</th>
+            </tr>
         </thead>
         <tbody>
             @foreach(var item in Model)
@@ -20,6 +24,9 @@
                     </td>
                     <td>
                         @item.Name
+                    </td>
+                    <td>
+                        @item.PricePerItem
                     </td>
                     <td>
                         @item.Description

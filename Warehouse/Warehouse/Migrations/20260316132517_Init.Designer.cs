@@ -12,8 +12,8 @@ using Warehouse.Data.DbRepository;
 namespace Warehouse.Migrations
 {
     [DbContext(typeof(WarehouseDbContext))]
-    [Migration("20260315224930_AddedProducts")]
-    partial class AddedProducts
+    [Migration("20260316132517_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -53,6 +53,9 @@ namespace Warehouse.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<decimal>("PricePerItem")
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
@@ -68,7 +71,8 @@ namespace Warehouse.Migrations
                             Description = "OLED SAMSUNG TV",
                             IsDeleted = false,
                             LastModifiedTime = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Name = "TV"
+                            Name = "TV",
+                            PricePerItem = 0m
                         },
                         new
                         {
@@ -76,7 +80,8 @@ namespace Warehouse.Migrations
                             Description = "240Hz Asus",
                             IsDeleted = false,
                             LastModifiedTime = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Name = "Gaming Monitor"
+                            Name = "Gaming Monitor",
+                            PricePerItem = 0m
                         });
                 });
 #pragma warning restore 612, 618

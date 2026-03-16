@@ -2,8 +2,20 @@
 @model Warehouse.Data.Entities.Item
 
 <form asp-controller="Item" asp-action="Add" method="post">
+   
+    <nav>
+        <input class="form-control" type="text" asp-for="Name" placeholder="Name for product" />
+        <span asp-validation-for="Name"></span>
+
+        <input class="form-control" type="number" asp-for="PricePerItem" placeholder="Enter price" />
+        <span asp-validation-for="PricePerItem"></span>
+
+        <textarea asp-for="Description"
+                  rows="4"
+                  placeholder="Enter description">
+        </textarea>
+
+        <button class="btn-success" type="submit">Submit</button>
+    </nav>
     
-    <input class="form-control" type="text" asp-for="Name" />
-
-
 </form>

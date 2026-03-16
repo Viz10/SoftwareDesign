@@ -13,6 +13,7 @@ namespace Warehouse.Data.Entities
 
         [MaxLength(200)]
         public string? Description { get; set; }
+        public decimal PricePerItem { get; set; }
 
         public DateTimeOffset? DeletedAtTime {  get; set; }
         public DateTimeOffset LastModifiedTime { get; set; }

@@ -23,9 +23,16 @@ namespace Warehouse.Controllers
         }
 
         [HttpPost]
-        public IActionResult Add(Item item) /// show form only
+        public IActionResult Add(Item item) /// add product
         {
-            return View();
+            if (!ModelState.IsValid)
+            {
+                return View(item);
+            }
+
+            _dbContext.Items.Add(item);
+            _dbContext.SaveChanges();
+            return RedirectToAction("ViewAll", "Item");
         }
     }
 }
