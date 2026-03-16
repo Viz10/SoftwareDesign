@@ -1,12 +1,21 @@
-﻿
-@{
+﻿@{
     ViewData["Title"] = "Product Page";
 }
 
 @model IEnumerable<Item>
 
+<nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+<div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+    <ul class="navbar-nav flex-grow-1">
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Item" asp-action="Add">Add Products</a>
+        </li>
+    </ul>
+</div>
+</nav>
+
 <div class="mt-4 mb-4">
-    <table class="table-group-stripped ">
+    <table class="table table-striped table-lg">
         <thead>
             <tr>
                 <th>Id</th>
@@ -16,25 +25,17 @@
             </tr>
         </thead>
         <tbody>
-            @foreach(var item in Model)
+            @foreach (var item in Model)
             {
                 <tr>
-                    <td>
-                        @item.Id
-                    </td>
-                    <td>
-                        @item.Name
-                    </td>
-                    <td>
-                        @item.PricePerItem
-                    </td>
-                    <td>
-                        @item.Description
-                    </td>
+                    <td>@item.Id</td>
+                    <td>@item.Name</td>
+                    <td>@item.PricePerItem</td>
+                    <td>@item.Description</td>
+                    <td><a asp-controller="Item" asp-action="Delete" asp-route-id=@item.Id>Delete</a></td>
+                    <td><a asp-controller="Item" asp-action="Edit" asp-route-id=@item.Id>Edit</a></td>
                 </tr>
             }
         </tbody>
     </table>
 </div>
-
-

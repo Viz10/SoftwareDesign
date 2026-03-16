@@ -12,7 +12,7 @@ using Warehouse.Data.DbRepository;
 namespace Warehouse.Migrations
 {
     [DbContext(typeof(WarehouseDbContext))]
-    [Migration("20260316132517_Init")]
+    [Migration("20260316220156_Init")]
     partial class Init
     {
         /// <inheritdoc />
