@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Warehouse.Data.DbRepository;
+using Warehouse.Services;
 
 /*
 Add-Migration Init -Project Warehouse -StartupProject Warehouse
@@ -11,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<WarehouseDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddScoped<IServiceItem, ServiceItem>();
 
 var app = builder.Build();
 

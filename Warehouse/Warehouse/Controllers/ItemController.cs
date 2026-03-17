@@ -1,87 +1,96 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Warehouse.Data.DbRepository;
+using Warehouse.Data.DTOs;
 using Warehouse.Data.Entities;
+using Warehouse.Services;
 
 namespace Warehouse.Controllers
 {
-    public class ItemController(WarehouseDbContext DbContext) : Controller
+    public class ItemController : Controller
     {
-        private WarehouseDbContext _dbContext { get; } = DbContext;
+        private readonly IServiceItem _service;
+        public ItemController(IServiceItem _service)  
+        {
+            this._service = _service;
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> ViewAll()
         {
-            var priductItems = await _dbContext.Items.ToListAsync();
-            return View(priductItems);
+            var items = await _service.getAllItems();
+            return View(items);
         }
-        
+
+
         [HttpGet]
         public IActionResult Add() /// show form only
         {
             return View(); /// show own Add view
         }
-
+        
+        
         [HttpPost]
-        public async Task<IActionResult> Add(Item item) /// add product
+        public async Task<IActionResult> Add(ItemDTO item) /// add product
         {
             if (!ModelState.IsValid)
             {
                 return View(item); /// show errors
             }
 
-            _dbContext.Items.Add(item);
-            await _dbContext.SaveChangesAsync();
+            await _service.addItem(item);
 
             return RedirectToAction("ViewAll", "Item");
         }
 
-        public async Task<IActionResult> Delete(int id) /// show form only
+        
+        [HttpGet] // GET /Item/Edit/5
+        public async Task<IActionResult> Edit(int id)
         {
-
-            var item = await _dbContext.Items.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
-
-            if (item == null)
+            var result = await _service.findById(id);
+            if (!result.Item2)
             {
+                TempData["Error"] = "Error editing";
                 return RedirectToAction("ViewAll", "Item");
             }
-
-             _dbContext.Items.Remove(item);
-            await _dbContext.SaveChangesAsync();
-
-            return RedirectToAction("ViewAll", "Item");
+            ViewBag.ItemId = id;
+            return View(result.Item1);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Edit(int id) /// show form only with id passed through route
-        {
-            var item = await _dbContext.Items.FirstOrDefaultAsync(x => x.Id == id);
-
-            return (item is not null) ? View(item) : RedirectToAction("ViewAll", "Item");
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Edit(Item item) 
+        
+        [HttpPost]  // POST /Item/Edit/5
+        public async Task<IActionResult> Edit(int id, ItemDTO item)
         {
             if (!ModelState.IsValid)
             {
-                return View(); 
+                ViewBag.ItemId = id;
+                return View(item);
             }
 
-            var it= await _dbContext.Items.FirstOrDefaultAsync(x => x.Id == item.Id);
+            var it = await _service.editItem(id, item);
 
-            if (it == null)
-            {
-                return RedirectToAction("ViewAll", "Item");
-            }
+            if (it is null)
+                TempData["Error"] = "Failed to edit item.";
+            else
+                TempData["Success"] = "Item edited successfully.";
 
-            it.PricePerItem=item.PricePerItem;
-            it.Description=item.Description??null;
-            it.Name=item.Name;
+            return RedirectToAction("ViewAll", "Item");
+        }
 
-            await _dbContext.SaveChangesAsync();
+
+        public async Task<IActionResult> Delete(int id)
+        {
+            var ok = await _service.deleteItem(id);
+
+            if (!ok)
+                TempData["Error"] = "Failed to delete item.";
+            else
+                TempData["Success"] = "Item deleted successfully.";
 
             return RedirectToAction("ViewAll", "Item");
         }
     }
+
 }

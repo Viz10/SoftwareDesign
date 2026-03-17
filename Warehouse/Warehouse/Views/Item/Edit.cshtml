@@ -1,12 +1,8 @@
-﻿@model Warehouse.Data.Entities.Item
+﻿@model Warehouse.Data.DTOs.ItemDTO
 
-<form asp-controller="Item" asp-action="Edit" method="post">
+<form asp-controller="Item" asp-action="Edit" asp-route-id="@ViewBag.ItemId" method="post">
     
     <div asp-validation-summary="All"></div>
-
-    <div class="card">
-        <input class="form-control" type="text" asp-for="Id" placeholder="Id" disabled/>
-    </div>
 
     <div class="card">
         <input class="form-control" type="text" asp-for="Name" placeholder="Name for product" />

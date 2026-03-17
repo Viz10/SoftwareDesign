@@ -1,8 +1,9 @@
-﻿@{
-    ViewData["Title"] = "Product Page";
+﻿
+@{
+    ViewData["Title"] = "Products Type Page";
 }
 
-@model IEnumerable<Item>
+@model IEnumerable<Warehouse.Data.DTOs.ItemResponseDTO>
 
 <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
@@ -32,10 +33,25 @@
                     <td>@item.Name</td>
                     <td>@item.PricePerItem</td>
                     <td>@item.Description</td>
-                    <td><a asp-controller="Item" asp-action="Delete" asp-route-id=@item.Id>Delete</a></td>
-                    <td><a asp-controller="Item" asp-action="Edit" asp-route-id=@item.Id>Edit</a></td>
+                    <td><a asp-controller="Item" asp-action="Delete" asp-route-id="@item.Id">Delete</a></td>
+                    <td><a asp-controller="Item" asp-action="Edit" asp-route-id="@item.Id">Edit</a></td>
                 </tr>
             }
         </tbody>
     </table>
 </div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
