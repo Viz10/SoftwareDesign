@@ -3,55 +3,22 @@
     ViewData["Title"] = "Products Type Page";
 }
 
-@model IEnumerable<Warehouse.Data.DTOs.ItemResponseDTO>
+@model IEnumerable<Warehouse.Data.DTOs.ItemDTOs.ItemResponseDTO>
 
-<nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-<div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-    <ul class="navbar-nav flex-grow-1">
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="Item" asp-action="Add">Add Products</a>
-        </li>
-    </ul>
-</div>
-</nav>
+@{
+    var rowItems = Model.Select(dto => new Dictionary<string, object>
+    {
+        ["Id"]=dto.Id,
+        ["Name"]=dto.Name,
+        ["Description"]=dto.Description??"",
+        ["PricePerItem"] = dto.PricePerItem??0
+    });
 
-<div class="mt-4 mb-4">
-    <table class="table table-striped table-lg">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>PricePerItem</th>
-                <th>Description</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.Id</td>
-                    <td>@item.Name</td>
-                    <td>@item.PricePerItem</td>
-                    <td>@item.Description</td>
-                    <td><a asp-controller="Item" asp-action="Delete" asp-route-id="@item.Id">Delete</a></td>
-                    <td><a asp-controller="Item" asp-action="Edit" asp-route-id="@item.Id">Edit</a></td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
+    var columns = new List<string>{ "Id", "Name", "Description", "PricePerItem" };
 
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger alert-dismissible">
-        @TempData["Error"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
+    string controller = "Item";
+
 }
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-dismissible">
-        @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
+
+@await Html.PartialAsync("_ViewGenericTable", (controller, columns, rowItems, "Items"))
+

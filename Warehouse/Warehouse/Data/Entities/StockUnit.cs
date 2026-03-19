@@ -2,21 +2,23 @@
 
 namespace Warehouse.Data.Entities
 {
-
     public enum UnitStatus { Available, Reserved, Shipped, Returned }
 
-    public class StockUnit
+    public class StockUnit : IEntity
     {
         [Key]
         public int Id { get; set; } 
 
-        [Required]
         public int ItemId { get; set; } 
         public Item Item { get; set; } = null!;
 
-        public string? SerialNumber { get; set; }
+        public string SerialNumber { get; set; } = null!;
         public string? Note { get; set; }
 
+        public DateTimeOffset? DeletedAtTime { get; set; }
+        public DateTimeOffset LastModifiedTime { get; set; }
+
+        public bool IsDeleted { get; set; } = false;
         public UnitStatus Status { get; set; } = UnitStatus.Available;
     }
 }

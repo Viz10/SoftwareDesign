@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Warehouse.Data.DbRepository;
-using Warehouse.Data.DTOs;
+using Warehouse.Data.DTOs.ItemDTOs;
 using Warehouse.Data.Entities;
 using Warehouse.Services;
 
@@ -10,58 +10,63 @@ namespace Warehouse.Controllers
 {
     public class ItemController : Controller
     {
-        private readonly IServiceItem _service;
-        public ItemController(IServiceItem _service)  
+        private readonly ItemService _service;
+        public ItemController(ItemService _service)  
         {
             this._service = _service;
         }
 
 
-        [HttpGet]
+        [HttpGet] /// return all product types
         public async Task<IActionResult> ViewAll()
         {
-            var items = await _service.getAllItems();
+            var items = await _service.getAll();
             return View(items);
         }
 
-
-        [HttpGet]
-        public IActionResult Add() /// show form only
+        [HttpGet] /// show Add form only
+        public IActionResult Add() 
         {
             return View(); /// show own Add view
         }
+
+        [HttpGet] /// get selected item to edit
+        public async Task<IActionResult> Edit(int id) 
+        {
+            var result = await _service.findById(id);
+            if (result is null)
+            {
+                TempData["Error"] = "Error editing";
+                return RedirectToAction("ViewAll", "Item");
+            }
+            ViewBag.ItemId = id;
+            return View(result);
+        }
+
+
+
         
-        
-        [HttpPost]
-        public async Task<IActionResult> Add(ItemDTO item) /// add product
+        [HttpPost] /// add product with data from form
+        public async Task<IActionResult> Add(ItemCreateDTO item) 
         {
             if (!ModelState.IsValid)
             {
                 return View(item); /// show errors
             }
 
-            await _service.addItem(item);
+            var result = await _service.add(item);
+
+            if(result is null)
+            {
+                TempData["Error"] = "Error adding";
+                RedirectToAction("ViewAll", "Item");
+            }
 
             return RedirectToAction("ViewAll", "Item");
         }
 
-        
-        [HttpGet] // GET /Item/Edit/5
-        public async Task<IActionResult> Edit(int id)
-        {
-            var result = await _service.findById(id);
-            if (!result.Item2)
-            {
-                TempData["Error"] = "Error editing";
-                return RedirectToAction("ViewAll", "Item");
-            }
-            ViewBag.ItemId = id;
-            return View(result.Item1);
-        }
-
-        
-        [HttpPost]  // POST /Item/Edit/5
-        public async Task<IActionResult> Edit(int id, ItemDTO item)
+        [HttpPost] /// update item with new data from form
+        public async Task<IActionResult> Edit(int id, ItemUpdateDTO item)
         {
             if (!ModelState.IsValid)
             {
@@ -69,7 +74,7 @@ namespace Warehouse.Controllers
                 return View(item);
             }
 
-            var it = await _service.editItem(id, item);
+            var it = await _service.edit(id, item);
 
             if (it is null)
                 TempData["Error"] = "Failed to edit item.";
@@ -79,10 +84,9 @@ namespace Warehouse.Controllers
             return RedirectToAction("ViewAll", "Item");
         }
 
-
         public async Task<IActionResult> Delete(int id)
         {
-            var ok = await _service.deleteItem(id);
+            var ok = await _service.delete(id);
 
             if (!ok)
                 TempData["Error"] = "Failed to delete item.";
