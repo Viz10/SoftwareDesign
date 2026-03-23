@@ -1,0 +1,33 @@
+﻿
+@model (string Controller,string Action,string Method,List<(string type,string placeholder,string fieldName,string? value)> Values,int?Id,string Title)
+
+@{
+    ViewData["Title"] = $"{Model.Title} Page";
+}
+
+<form asp-controller="@Model.Controller" asp-action="@Model.Action" method="@Model.Method" asp-route-id="@Model.Id">
+    
+    <div asp-validation-summary="All"></div>
+        
+    @if (Model.Id is not null)
+    {
+        <label class="form-label">Id:</label>
+        <input class="form-control" type="text" value="@Model.Id" disabled />
+    }
+
+    @foreach (var element in @Model.Values)
+    {
+        <div class="card">
+            <input class="form-control"
+                   type="@element.type"
+                   name="@element.fieldName"
+                   id="@element.fieldName"
+                   placeholder="@element.placeholder"
+                   value="@element.value" />
+
+        </div>
+    }
+    
+    <button class="btn-success" type="submit">Submit</button>
+   
+</form>

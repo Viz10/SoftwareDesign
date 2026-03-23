@@ -1,0 +1,39 @@
+﻿@model IEnumerable<Warehouse.Data.DTOs.StockUnitDTOs.StockUnitResponseDTO>
+
+@{
+    var rowItems = Model.Select(dto => new Dictionary<string, object>
+    {
+        ["Id"] = dto.Id,
+        ["Name"] = dto.Name,
+        ["Note"] = dto.Note ?? "",
+        ["Current Price"] = dto.ActualPrice ?? 0,
+        ["Serial Number"] = dto.SerialNumber,
+        ["Status"] = dto.Status.ToString()
+    });
+
+    var model = new Warehouse.Models.GenericTableModel()
+    {
+        Controller = "StockUnit",
+        ColumnNames = new List<string> { "Id", "Name", "Note", "Current Price", "Serial Number", "Status" },
+        RowPairs = rowItems,
+        title = "Stock Products"
+    };
+
+}
+
+<h4>Items types inside Warehouse</h4>
+
+<div class="card p-3 d-flex flex-row gap-3">
+    <form asp-controller="StockUnit" asp-action="SearchByName" method="get" class="d-flex gap-2 flex-grow-1">
+        <input type="text" name="name" placeholder="Search by name..." class="form-control" />
+        <button type="submit" class="btn btn-success w-auto">Search</button>
+    </form>
+
+    <form asp-controller="StockUnit" asp-action="SearchByBarcode" method="get" class="d-flex gap-2 flex-grow-1">
+        <input type="text" name="barcode" placeholder="Search by barcode..." class="form-control" />
+        <button type="submit" class="btn btn-success w-auto">Search</button>
+    </form>
+</div>
+
+@await Html.PartialAsync("_ViewGenericTable", model)
+

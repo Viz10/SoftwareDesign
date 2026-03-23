@@ -1,8 +1,4 @@
 ﻿
-@{
-    ViewData["Title"] = "Products Type Page";
-}
-
 @model IEnumerable<Warehouse.Data.DTOs.ItemDTOs.ItemResponseDTO>
 
 @{
@@ -11,14 +7,28 @@
         ["Id"]=dto.Id,
         ["Name"]=dto.Name,
         ["Description"]=dto.Description??"",
-        ["PricePerItem"] = dto.PricePerItem??0
+        ["Base Price Per Item"] = dto.PricePerItem ?? 0
     });
 
-    var columns = new List<string>{ "Id", "Name", "Description", "PricePerItem" };
-
-    string controller = "Item";
+    var model = new Warehouse.Models.GenericTableModel()
+            {
+                Controller = "Item",
+                ColumnNames = new List<string> { "Id", "Name", "Description", "Base Price Per Item" },
+                RowPairs = rowItems,
+                title = "Items",
+        ExtraActions = new List<(string, string, string?)> { ("See Products", "ViewAllSelectedProducts", "StockUnit") }
+            };
 
 }
 
-@await Html.PartialAsync("_ViewGenericTable", (controller, columns, rowItems, "Items"))
+<h4>Items types inside Warehouse</h4>
+
+<div class="card p-3">
+    <form asp-controller="Item" asp-action="SearchByName" method="get" class="d-flex gap-2">
+        <input type="text" name="name" placeholder="Search..." class="form-control" />
+        <button type="submit" class="btn btn-success w-auto">Search</button>
+    </form>
+</div>
+
+@await Html.PartialAsync("_ViewGenericTable", model)
 

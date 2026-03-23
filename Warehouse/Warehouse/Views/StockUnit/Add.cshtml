@@ -1,0 +1,19 @@
+﻿@model Warehouse.Data.DTOs.StockUnitDTOs.StockUnitCreateDTO
+
+
+@{
+    string Controller = "StockUnit";
+    string Action = "Add";
+    string Method = "post";
+    string Title = "Product add";
+    
+    ///                       type, placeholder, fieldName,? value
+    var enumerable = new List<(string, string, string, string?)>
+    {
+        ("number", "Price",    "PricePerItem", null),
+        ("number", "Quantity", "Quantity",  null),
+    };
+
+}
+    
+@await Html.PartialAsync("_ViewGenericForm", (Controller, Action, Method, enumerable, (int?)null, Title))

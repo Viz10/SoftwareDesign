@@ -13,5 +13,7 @@ namespace Warehouse.Data.DTOs.ItemDTOs
         
         [MaxLength(500)]
         public string? Description { get; set; }
+
+        public DateTimeOffset ModifiedTime { get; set; } = DateTimeOffset.UtcNow;
     }
 }

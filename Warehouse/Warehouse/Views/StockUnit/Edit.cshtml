@@ -1,0 +1,30 @@
+﻿@model Warehouse.Data.DTOs.StockUnitDTOs.StockUnitResponseDTO
+
+
+<label class="form-label">Serial Product Number:</label>
+<input class="form-control" type="text" value="@Model.SerialNumber" disabled />
+
+<select id="statusSelect" class="form-control">
+    @foreach (var status in Enum.GetValues<Warehouse.Data.Entities.UnitStatus>())
+    {
+        <option value="@status" selected="@(Model.Status == status)">@status</option>
+    }
+</select>
+
+@{
+    ///                    type, placeholder, fieldName,? value
+    var enumerable = new List<(string, string, string, string?)>
+    {
+        ("number", "Price", "ActualPrice", Model.ActualPrice?.ToString("G29", System.Globalization.CultureInfo.InvariantCulture)),
+        ("text",     "Note",  "Note",Model.Note),
+        ("hidden", "",      "Status",      Model.Status.ToString()),
+    };
+}
+@await Html.PartialAsync("_ViewGenericForm", ("StockUnit", "Edit", "post", enumerable, (int?)Model.Id, "Item edit"))
+
+@*regular generic fields are processed separatedly from Status*@
+<script>
+    document.getElementById("statusSelect").addEventListener("change", function () {
+        document.getElementById("Status").value = this.value;
+    });
+</script>

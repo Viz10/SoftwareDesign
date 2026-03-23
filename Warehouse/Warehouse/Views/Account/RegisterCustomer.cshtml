@@ -1,0 +1,37 @@
+﻿@model Warehouse.Data.DTOs.AccountDTOs.AccountCreateDTO
+@using Warehouse.Data.Entities
+
+<label class="form-label">Type:</label>
+<input class="form-control" type="text" value="@AccountType.Customer.ToString()" disabled />
+
+@{
+    string Controller = "Account";
+    string Action = "RegisterCustomer";
+    string Method = "post";
+    string Title = "Register";
+ 
+    //                    type, placeholder, fieldName,?value
+    var enumerable = new List<(string, string, string, string?)>
+    {
+        ("email",           "Email",            "Email",           null),
+        ("password",        "Password",         "Password",        null),
+        ("password", "Confirm Password", "ConfirmPassword", null),
+    };
+}
+ 
+@await Html.PartialAsync("_ViewGenericForm", (Controller, Action, Method, enumerable, (int?)null, Title))
+ 
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}

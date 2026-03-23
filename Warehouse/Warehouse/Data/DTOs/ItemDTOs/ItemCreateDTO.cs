@@ -9,6 +9,7 @@ namespace Warehouse.Data.DTOs.ItemDTOs
         public string Name { get; set; } = null!;
 
         [Required(ErrorMessage = "Price is required")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0!")]
         public decimal? PricePerItem { get; set; }
 
         [MaxLength(500)]

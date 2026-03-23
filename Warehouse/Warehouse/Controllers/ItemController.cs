@@ -16,6 +16,19 @@ namespace Warehouse.Controllers
             this._service = _service;
         }
 
+        [HttpGet] /// filter by name
+        public async Task<IActionResult> SearchByName(string name)
+        {
+            var items = await _service.searchItemTypeByName(name);
+
+            if(items is null)
+            {
+                TempData["Error"] = "Nothing found";
+                return RedirectToAction("ViewAll", "Item");
+            }
+
+            return View("ViewAll", items);
+        }
 
         [HttpGet] /// return all product types
         public async Task<IActionResult> ViewAll()
@@ -30,7 +43,7 @@ namespace Warehouse.Controllers
             return View(); /// show own Add view
         }
 
-        [HttpGet] /// get selected item to edit
+        [HttpGet] /// get selected item and pass it to edit
         public async Task<IActionResult> Edit(int id) 
         {
             var result = await _service.findById(id);
@@ -39,13 +52,9 @@ namespace Warehouse.Controllers
                 TempData["Error"] = "Error editing";
                 return RedirectToAction("ViewAll", "Item");
             }
-            ViewBag.ItemId = id;
             return View(result);
         }
 
-
-
-        
         [HttpPost] /// add product with data from form
         public async Task<IActionResult> Add(ItemCreateDTO item) 
         {
@@ -70,8 +79,7 @@ namespace Warehouse.Controllers
         {
             if (!ModelState.IsValid)
             {
-                ViewBag.ItemId = id;
-                return View(item);
+                return View(await _service.findById(id));
             }
 
             var it = await _service.edit(id, item);

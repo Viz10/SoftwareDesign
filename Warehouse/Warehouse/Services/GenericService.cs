@@ -34,21 +34,21 @@ namespace Warehouse.Services
 
             return mapper.Map<IEnumerable<ResponseDTO>>(elements);
         }
-        public virtual async Task<ResponseDTO?> add(CreateDTO item)
+        public virtual async Task<CreateDTO?> add(CreateDTO item)
         {
             var newType = mapper.Map<DataType>(item);
             try
             {
                 await dbContext.Set<DataType>().AddAsync(newType);
                 await dbContext.SaveChangesAsync();
+                return item;
             }
             catch (DbException)
             {
                 return null; /// already in
             }
-            return mapper.Map<ResponseDTO>(newType);
         }
-        public virtual async Task<ResponseDTO?> edit(int id, UpdateDTO item)
+        public virtual async Task<UpdateDTO?> edit(int id, UpdateDTO item)
         {
             var it = await dbContext.Set<DataType>().FirstOrDefaultAsync(x => x.Id == id);
 
@@ -61,7 +61,7 @@ namespace Warehouse.Services
 
             await dbContext.SaveChangesAsync();
 
-            return mapper.Map<ResponseDTO>(it);
+            return item;
         }
         public virtual async Task<bool> delete(int id)
         {

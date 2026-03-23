@@ -6,6 +6,14 @@ namespace Warehouse.Controllers
 {
     public class HomeController : Controller
     {
+
+        [HttpGet]
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            return RedirectToAction("Index");
+        }
+
         public IActionResult Index()
         {
             return View();

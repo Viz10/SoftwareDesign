@@ -1,21 +1,15 @@
-﻿@*@model Warehouse.Data.DTOs.ItemCreateDTO
+﻿@model Warehouse.Data.DTOs.ItemDTOs.ItemResponseDTO
 
-<form asp-controller="Item" asp-action="Edit" asp-route-id="@ViewBag.ItemId" method="post">
-    
-    <div asp-validation-summary="All"></div>
+@{
 
-    <div class="card">
-        <input class="form-control" type="text" asp-for="Name" placeholder="Name for product" />
-    </div>
-        
-    <div class="card">
-        <input class="form-control" type="number" asp-for="PricePerItem" min="0" step="0.5" placeholder="Enter price" />
-    </div>
+    var enumerable = new List<(string,string,string,string?)>
+    {
+        ("text",     "Name",         "Name",Model.Name),
+        ("number",   "Price",        "PricePerItem",Model.PricePerItem?.ToString("G29", System.Globalization.CultureInfo.InvariantCulture)), /// for , -> . decial rep
+        ("text",     "Description",  "Description",Model.Description),
+    };
+}
 
-    <div class="card">
-        <textarea asp-for="Description" rows="4" placeholder="Enter description"> </textarea>
-    </div>
-        
-    <button class="btn-success" type="submit">Submit</button>
-   
-</form>*@
+@await Html.PartialAsync("_ViewGenericForm", ("Item", "Edit", "post", enumerable,(int?)Model.Id,"Item edit"))
+
+
