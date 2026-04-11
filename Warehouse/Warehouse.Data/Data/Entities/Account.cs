@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+﻿
 using System.ComponentModel.DataAnnotations;
 
 namespace Warehouse.Data.Entities

@@ -8,7 +8,7 @@ using Warehouse.Data.DbRepository;
 
 #nullable disable
 
-namespace Warehouse.Migrations
+namespace Warehouse.Data.Migrations
 {
     [DbContext(typeof(WarehouseDbContext))]
     partial class WarehouseDbContextModelSnapshot : ModelSnapshot

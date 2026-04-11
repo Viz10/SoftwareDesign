@@ -7,13 +7,7 @@ public class AccountMappingProfile : Profile
     public AccountMappingProfile()
     {
         CreateMap<Account, AccountViewDTO>();
-
-        CreateMap<AccountCreateDTO, Account>()
-            .ForMember(dest => dest.PasswordHashed, opt => opt.Ignore())
-            .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-            .ForMember(dest => dest.ModifiedTime, opt => opt.Ignore())
-            .ForMember(dest => dest.DeletedAt, opt => opt.Ignore());
-
+        CreateMap<AccountCreateDTO, Account>();
         CreateMap<AccountUpdateDTO, Account>();
     }
 }

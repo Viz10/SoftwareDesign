@@ -3,9 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
-
-namespace Warehouse.Migrations
+namespace Warehouse.Data.Migrations
 {
     /// <inheritdoc />
     public partial class Init : Migration
@@ -14,13 +12,33 @@ namespace Warehouse.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Accounts",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PasswordHashed = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "SYSDATETIMEOFFSET()"),
+                    ModifiedTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "SYSDATETIMEOFFSET()"),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    AccountType = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Accounts", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Items",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    PricePerItem = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    PricePerItem = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DeletedAtTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     LastModifiedTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "SYSDATETIMEOFFSET()"),
@@ -32,6 +50,27 @@ namespace Warehouse.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Stocks",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ItemId = table.Column<int>(type: "int", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Stocks", x => x.Id);
+                    table.CheckConstraint("pozitive_quantity_constraint", "[Quantity] >= 0");
+                    table.ForeignKey(
+                        name: "FK_Stocks_Items_ItemId",
+                        column: x => x.ItemId,
+                        principalTable: "Items",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "StockUnits",
                 columns: table => new
                 {
@@ -40,6 +79,7 @@ namespace Warehouse.Migrations
                     ItemId = table.Column<int>(type: "int", nullable: false),
                     SerialNumber = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ActualPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     DeletedAtTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     LastModifiedTime = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false, defaultValueSql: "SYSDATETIMEOFFSET()"),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
@@ -56,14 +96,12 @@ namespace Warehouse.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.InsertData(
-                table: "Items",
-                columns: new[] { "Id", "DeletedAtTime", "Description", "IsDeleted", "Name", "PricePerItem" },
-                values: new object[,]
-                {
-                    { 1, null, "OLED SAMSUNG TV", false, "TV", 0m },
-                    { 2, null, "240Hz Asus", false, "Gaming Monitor", 0m }
-                });
+            migrationBuilder.CreateIndex(
+                name: "IX_Accounts_Email",
+                table: "Accounts",
+                column: "Email",
+                unique: true,
+                filter: "[IsDeleted] = 0");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Items_Name",
@@ -71,6 +109,11 @@ namespace Warehouse.Migrations
                 column: "Name",
                 unique: true,
                 filter: "[IsDeleted] = 0");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Stocks_ItemId",
+                table: "Stocks",
+                column: "ItemId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StockUnits_ItemId",
@@ -88,6 +131,12 @@ namespace Warehouse.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Accounts");
+
+            migrationBuilder.DropTable(
+                name: "Stocks");
+
             migrationBuilder.DropTable(
                 name: "StockUnits");
 

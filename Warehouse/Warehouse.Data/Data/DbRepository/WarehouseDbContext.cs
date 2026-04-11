@@ -3,6 +3,10 @@ using Warehouse.Data.Entities;
 
 namespace Warehouse.Data.DbRepository
 {
+
+    ///Add-Migration Init -Project SkyBuy.Data -StartupProject SkyBuy
+    ///Update-database -Project SkyBuy.Data -StartupProject SkyBuy
+
     public class WarehouseDbContext : DbContext
     {
         public DbSet<Item> Items { get; set; } 
