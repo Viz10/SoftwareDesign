@@ -9,10 +9,11 @@ namespace Warehouse.Mappings
     {
         public StockUnitMappingProfile()
         {
-            CreateMap<StockUnit, StockUnitResponseDTO>().ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Item.Name));
-
-            CreateMap<StockUnitUpdateDTO, StockUnit>()
-           .ForMember(dest => dest.Status, opt => opt.MapFrom(src => Enum.Parse<UnitStatus>(src.Status)));
+            CreateMap<StockUnit, StockUnitGetDTO>()
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Item.Name))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
+            
+            CreateMap<StockUnitSendDTO, StockUnit>();
         }
     }
 }

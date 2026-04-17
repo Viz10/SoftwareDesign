@@ -10,6 +10,12 @@ namespace Warehouse.Data.Entities
         public int ItemId { get; set; }
         public Item Item { get; set; } = null!;
 
+        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset LastModifiedTime { get; set; }
+        public DateTimeOffset? DeletedAtTime { get; set; }
+
+        public bool IsDeleted { get; set; } = false;
+
         public int Quantity { get; set; } = 0;
     }
 }

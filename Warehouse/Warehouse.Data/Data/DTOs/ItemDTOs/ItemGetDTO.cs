@@ -2,7 +2,7 @@
 
 namespace Warehouse.Data.DTOs.ItemDTOs
 {
-        public class ItemResponseDTO
+        public class ItemGetDTO
         {
             public int Id { get; set; }
             public string Name { get; set; } = null!;

@@ -8,6 +8,5 @@ public class AccountMappingProfile : Profile
     {
         CreateMap<Account, AccountViewDTO>();
         CreateMap<AccountCreateDTO, Account>();
-        CreateMap<AccountUpdateDTO, Account>();
     }
 }

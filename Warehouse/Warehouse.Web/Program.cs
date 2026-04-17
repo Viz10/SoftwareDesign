@@ -8,18 +8,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
 builder.Services.AddDbContext<WarehouseDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddAutoMapper(cfg => {
     cfg.AddMaps(typeof(Program).Assembly);
     cfg.AddMaps(typeof(ItemService).Assembly); // scans ALL of Warehouse.Services
 });
+
 builder.Services.AddTransient<ItemService>();
-builder.Services.AddScoped<StockUnitService>();
-builder.Services.AddScoped<AccountService>();
+builder.Services.AddTransient<StockUnitService>();
+builder.Services.AddTransient<AccountService>();
+
+builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
 });
 
 var app = builder.Build();
@@ -32,8 +37,8 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
-app.UseSession();
 app.UseAntiforgery();
+app.UseSession();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();

@@ -1,0 +1,67 @@
+﻿@page "/Items/Add"
+
+@using Warehouse.Data.DTOs.ItemDTOs
+@using Warehouse.Web.Components.Reusable
+@using Warehouse.Services
+@using Warehouse.Web.Models
+
+@inject ItemService itemservice
+@inject NavigationManager Nav
+
+<PageTitle>Add Item</PageTitle>
+
+<Alert error="@error"></Alert>
+
+<EditForm OnInvalidSubmit="Add" Model="NewItem">
+    
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+
+    <div>
+        <label>Name</label>
+        <InputText @bind-Value="NewItem.Name" />
+    </div>
+ 
+    <div>
+        <label>Price Per Item</label>
+        <InputNumber step="0.1" @bind-Value="NewItem.PricePerItem" />
+    </div>
+
+    <div>
+        <label>Description</label>
+        <InputTextArea @bind-Value="NewItem.Description"/>
+    </div>
+
+    <button type="submit" disabled="@Loading">Submit</button>
+    <button type="button" @onclick="Return">Cancel</button>
+
+</EditForm>
+
+
+
+@code {
+    private string? error;
+    private bool Loading = false;
+    public ItemSendDTO NewItem = new();
+
+    public void Return()
+    {
+        Nav.NavigateTo("/Items");
+    }
+    public async Task Add()
+    {
+        Loading = true;
+
+        var msg =  await itemservice.add(NewItem);
+
+        if(msg is not null)
+        {
+            error = msg;
+            Loading = false;
+            return;
+        }
+        
+        Loading = false;
+        Return();
+    }
+}

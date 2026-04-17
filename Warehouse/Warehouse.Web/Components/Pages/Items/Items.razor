@@ -1,0 +1,75 @@
+﻿@page "/Items"
+
+@using Warehouse.Data.DTOs.ItemDTOs
+@using Warehouse.Web.Components.Reusable
+@using Warehouse.Services
+@using Warehouse.Web.Models
+
+@inject ItemService itemservice
+@inject NavigationManager Nav
+
+<PageTitle>Warehouse Items</PageTitle>
+
+<Alert error="@error"></Alert>
+
+<SearchBar PassSearchName="HandleSearchByName"></SearchBar>
+
+<GenericTable Model="@Model" CellNameValuePair="@CellNameValuePair"></GenericTable>
+
+
+
+@code {
+    private string? error;
+
+    public string? searchByName { get; set; }
+    public IEnumerable<Dictionary<string, object>> CellNameValuePair { get; set; } = default!;
+    public GenericTablePlugIns Model { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var task = InitCellNameValuePairs();
+        InitTablePlugins();
+        await task;
+    }
+
+    public async Task InitCellNameValuePairs()
+    {
+        var (Value,Error) = await itemservice.searchItemTypeByName(searchByName);
+
+        if(Error is not null)
+        {
+            error = Error;
+            return;
+        }
+
+        CellNameValuePair = Value.Select(dto => new Dictionary<string, object>
+        {
+            ["Id"] = dto.Id,
+            ["Name"] = dto.Name,
+            ["Description"] = dto.Description ?? "",
+            ["Base Price Per Item"] = dto.PricePerItem ?? 0
+        });
+
+    }
+    public void InitTablePlugins()
+    {
+        Model = new GenericTablePlugIns()
+        {
+            TableTitle = "Items Table",
+            ColumnNames = new List<string> { "Id", "Name", "Description", "Base Price Per Item" },
+            BasePagePath = "/Items",
+            OnDeleteCallback = EventCallback.Factory.Create<int>(this,HandleDelete),
+            ExtraActions = new List<(string ButtonLabel, EventCallback<int> Action)> {("See Products", EventCallback.Factory.Create<int>(this,(id)=>Nav.NavigateTo("/"))) }
+        };
+    }
+
+    public async Task HandleDelete(int id) {
+        await itemservice.delete(id);
+        await InitCellNameValuePairs(); /// refresh data reference
+    }
+    public async Task HandleSearchByName(string? name)
+    {
+        searchByName = name;
+        await InitCellNameValuePairs();
+    }
+}

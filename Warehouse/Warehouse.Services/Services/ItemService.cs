@@ -7,27 +7,32 @@ using Warehouse.Data.Entities;
 
 namespace Warehouse.Services
 {
-    public class ItemService : GenericService<Item, ItemResponseDTO, ItemCreateDTO, ItemUpdateDTO>
+    public class ItemService : GenericService<Item, ItemGetDTO, ItemSendDTO>
     {
         public ItemService(WarehouseDbContext dbContext, IMapper mapper) : base(dbContext, mapper) { }
-
-        public async Task<List<ItemResponseDTO>?> searchItemTypeByName(string name)
+        public async Task<(List<ItemGetDTO>? Value,string? Error)> searchItemTypeByName(string? name)
         {
-            if (string.IsNullOrWhiteSpace(name) || name.Length <2 )
+
+            List<Item> result = new List<Item>();
+
+            try
             {
-                Debug.WriteLine(name);
-                return null;
+                if (string.IsNullOrWhiteSpace(name) || name.Length < 2)
+                {
+                    result = await dbContext.Items.ToListAsync(); /// return all or nothing
+                }
+                else
+                {
+                    result = await dbContext.Items
+                                            .Where(item => item.Name.ToLower().Contains(name.ToLower()))
+                                            .ToListAsync(); /// partial result
+                }
+                return (mapper.Map<List<ItemGetDTO>>(result),null);
             }
-
-            var partialResults = await dbContext.Set<Item>()
-            .Where(item => item.Name.Contains(name))
-            .ToListAsync();
-
-            if (!partialResults.Any()) {
-                return null;
+            catch (Exception ex) {
+                return (null, ex.Message);
             }
-
-            return mapper.Map<List<ItemResponseDTO>>(partialResults);
+            
         }
     }
 }

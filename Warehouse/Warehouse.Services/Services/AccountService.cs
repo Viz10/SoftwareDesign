@@ -7,10 +7,9 @@ using BCrypt.Net;
 
 namespace Warehouse.Services
 {
-    public class AccountService : GenericService<Account, AccountViewDTO, AccountCreateDTO, AccountUpdateDTO>
+    public class AccountService : GenericService<Account, AccountViewDTO, AccountCreateDTO>
     {
         public AccountService(WarehouseDbContext dbContext, IMapper mapper) : base(dbContext, mapper) { }
-
 
 
         public async Task<(bool,string?,AccountViewDTO?)> login(LoginDTO item)

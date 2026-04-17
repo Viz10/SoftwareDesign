@@ -2,7 +2,7 @@
 
 namespace Warehouse.Data.DTOs.ItemDTOs
 {
-    public class ItemCreateDTO /// form related data with checkings
+    public class ItemSendDTO 
     {
         [Required(ErrorMessage = "Name is required")]
         [MaxLength(100)]

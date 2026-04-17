@@ -6,76 +6,120 @@ using Warehouse.Data.Entities;
 
 namespace Warehouse.Services
 {
-    public abstract class GenericService<DataType, ResponseDTO, CreateDTO, UpdateDTO> : IGenericService<ResponseDTO, CreateDTO, UpdateDTO>
+    public abstract class GenericService<DataType,GetDTO,SendDTO> : IGenericService<GetDTO, SendDTO>
     where DataType : class, IEntity /// like c++ requires(T t){t.Id;} costraint
-    where ResponseDTO : class
-    where CreateDTO : class
-    where UpdateDTO : class /// to be able to use null on them
+    where GetDTO : class
+    where SendDTO : class /// to be able to use null on them
     {
-        protected readonly DbContext dbContext;
+        protected readonly WarehouseDbContext dbContext;
         protected readonly IMapper mapper;
+       
         public GenericService(WarehouseDbContext dbContext, IMapper mapper)
         {
             this.dbContext = dbContext;
             this.mapper= mapper;
         }
 
-        public virtual async Task<ResponseDTO?> findById(int id) 
+        public virtual async Task<(GetDTO? Value, string? Error)> findById(int id) 
         {
-            var item = await dbContext.Set<DataType>().FindAsync(id);
-
-            if (item == null) return null; /// not found
-
-            return mapper.Map<ResponseDTO>(item);
-        }
-        public virtual async Task<IEnumerable<ResponseDTO>> getAll()
-        {
-            var elements = await dbContext.Set<DataType>().ToListAsync();
-
-            return mapper.Map<IEnumerable<ResponseDTO>>(elements);
-        }
-        public virtual async Task<CreateDTO?> add(CreateDTO item)
-        {
-            var newType = mapper.Map<DataType>(item);
             try
             {
-                await dbContext.Set<DataType>().AddAsync(newType);
+                var item = await dbContext.Set<DataType>().FindAsync(id);
+                if (item == null) return (null,"Not Found");
+                return (mapper.Map<GetDTO>(item),null);
+            }
+            catch (Exception ex)
+            {
+                return (null,ex.Message);
+            }   
+        }
+        public virtual async Task<(IEnumerable<GetDTO>? Value, string? Error)> getAll()
+        {
+            try
+            {
+                var elements = await dbContext.Set<DataType>().ToListAsync();
+                if(elements == null) return (null,"Not found");
+                return (mapper.Map<IEnumerable<GetDTO>>(elements), null);
+            }
+            catch (Exception ex)
+            {
+                return (null, ex.Message);
+            }
+        }
+        public virtual async Task<string?> add(SendDTO item)
+        {
+            try
+            {
+                var toBeAdded = mapper.Map<DataType>(item);
+                await dbContext.Set<DataType>().AddAsync(toBeAdded); /// as its generic cannot check weather is already there by name or other props.
                 await dbContext.SaveChangesAsync();
-                return item;
+                return null;
             }
-            catch (DbException)
+            catch (DbUpdateException)
             {
-                return null; /// already in
+                return "Already present!";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
             }
         }
-        public virtual async Task<UpdateDTO?> edit(int id, UpdateDTO item)
+        public virtual async Task<(GetDTO? Value, string? Error)> edit(int id, SendDTO updated)
         {
-            var it = await dbContext.Set<DataType>().FirstOrDefaultAsync(x => x.Id == id);
-
-            if (it == null)
+            try
             {
-                return null; /// not found
+                var Old = await dbContext.Set<DataType>().FirstOrDefaultAsync(x => x.Id == id);
+
+                if (Old == null)
+                {
+                    return (null,"Not found"); /// not found
+                }
+                mapper.Map(updated, Old);
+                Old.LastModifiedTime = DateTimeOffset.UtcNow;
+                await dbContext.SaveChangesAsync();
+                return (mapper.Map<GetDTO>(Old), null);
             }
-
-            mapper.Map(item, it);
-
-            await dbContext.SaveChangesAsync();
-
-            return item;
+            catch (Exception ex)
+            {
+                return (null, ex.Message);
+            }
         }
-        public virtual async Task<bool> delete(int id)
+        public virtual async Task<string?> delete(int id)
         {
-            var item = await dbContext.Set<DataType>().AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
-
-            if (item == null)
+            try
             {
-                return false;
+             var item = await dbContext.Set<DataType>().FirstOrDefaultAsync(x => x.Id == id);
+                
+                if (item == null)
+                {
+                    return "Not present!";
+                }
+
+                item.IsDeleted = true;
+                item.DeletedAtTime = DateTimeOffset.UtcNow;
+                item.LastModifiedTime = DateTimeOffset.UtcNow;
+
+                await dbContext.SaveChangesAsync();
+                return null;
+
             }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+        public virtual async Task<string?> restore(int id)
+        {
+            var item = await dbContext.Set<DataType>().IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
 
-            dbContext.Set<DataType>().Remove(item);
+            if (item == null) return "Not found";
+
+            item.IsDeleted = false;
+            item.DeletedAtTime = null;
+            item.LastModifiedTime = DateTimeOffset.UtcNow;
+
             await dbContext.SaveChangesAsync();
-
-            return true;
+            return null;
         }
     }
 }

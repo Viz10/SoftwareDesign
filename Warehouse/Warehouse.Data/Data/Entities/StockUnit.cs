@@ -4,7 +4,7 @@ namespace Warehouse.Data.Entities
 {
     public enum UnitStatus { Available, Reserved, Shipped, Returned }
 
-    public class StockUnit : IEntity /// Samsung Galaxy S26 
+    public class StockUnit : IEntity 
     {
         [Key]
         public int Id { get; set; } 
@@ -19,8 +19,8 @@ namespace Warehouse.Data.Entities
 
         public DateTimeOffset? DeletedAtTime { get; set; }
         public DateTimeOffset LastModifiedTime { get; set; }
-
         public bool IsDeleted { get; set; } = false;
+
         public UnitStatus Status { get; set; } = UnitStatus.Available;
     }
 }

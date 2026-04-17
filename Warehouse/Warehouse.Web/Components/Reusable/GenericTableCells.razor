@@ -1,0 +1,44 @@
+﻿@using Warehouse.Web.Models
+@inject NavigationManager Nav
+
+    @foreach (var cell in CellNameValuePair)
+    {
+    var currentId = Convert.ToInt32(cell["Id"]); 
+    <tr>
+        @foreach (var col in Model.ColumnNames)
+        {
+            <td>@cell[col]</td>
+        }
+        <td>
+        <button class="btn btn-sm btn-outline-danger" 
+                @onclick='() => Model.OnDeleteCallback.InvokeAsync(currentId)'>
+                Delete
+        </button>
+        </td>
+
+        <td>
+        <button class="btn btn-sm btn-outline"
+                @onclick='() => Nav.NavigateTo(Model.BasePagePath + $"/Edit/{currentId}")'>
+            Edit
+        </button>
+        </td>
+
+        @if (Model.ExtraActions != null)
+        {
+            @foreach (var action in Model.ExtraActions)
+            {
+                <td>
+                <button class="btn btn-sm btn-outline"
+                        @onclick='() => action.Action.InvokeAsync(currentId)'>
+                    @action.ButtonLabel
+                </button>
+                </td>
+            }
+        }
+    </tr>
+    }
+
+@code {
+    [Parameter] public GenericTablePlugIns Model { get; set; } = null!;
+    [Parameter] public IEnumerable<Dictionary<string, object>> CellNameValuePair { get; set; } = null!;
+}

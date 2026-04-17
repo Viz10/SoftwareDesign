@@ -8,9 +8,8 @@ namespace Warehouse.Mappings
     {
         public ItemMappingProfile()
         {
-            CreateMap<Item, ItemResponseDTO>();       
-            CreateMap<ItemCreateDTO, Item>();         
-            CreateMap<ItemUpdateDTO, Item>();
+            CreateMap<Item, ItemGetDTO>();       
+            CreateMap<ItemSendDTO, Item>();         
         }
     }
 }

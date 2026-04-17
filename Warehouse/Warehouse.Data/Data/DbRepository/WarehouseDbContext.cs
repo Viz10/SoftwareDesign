@@ -42,7 +42,7 @@ namespace Warehouse.Data.DbRepository
             var account = modelBuilder.Entity<Account>();
             account.HasQueryFilter(a => !a.IsDeleted); /// when querying , skip deleted rows
             account.HasIndex(a => a.Email).IsUnique().HasFilter("[IsDeleted] = 0");
-            account.Property(p => p.ModifiedTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
+            account.Property(p => p.LastModifiedTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
             account.Property(p => p.CreatedAt).HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
         }

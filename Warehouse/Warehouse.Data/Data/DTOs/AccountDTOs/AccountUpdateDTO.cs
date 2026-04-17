@@ -9,7 +9,7 @@ namespace Warehouse.Data.DTOs.AccountDTOs
         [EmailAddress, MaxLength(100)]
         public string Email { get; set; } = null!;
 
-        public DateTimeOffset ModifiedTime { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset ModifiedTime { get; set; }
 
         public bool IsActive { get; set; }
         public bool IsDeleted { get; set; }

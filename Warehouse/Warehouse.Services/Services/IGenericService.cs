@@ -1,12 +1,13 @@
 ﻿
 namespace Warehouse.Services
 {
-    public interface IGenericService<ResponseDTO,CreateDTO,UpdateDTO>
+    public interface IGenericService<GetDTO,SendDTO>
     {
-        Task<ResponseDTO?> findById(int id);
-        Task<IEnumerable<ResponseDTO>> getAll();
-        Task<CreateDTO?> add(CreateDTO item);
-        Task<UpdateDTO?> edit(int id, UpdateDTO item);
-        Task<bool> delete(int id);
+
+        Task<(GetDTO? Value, string? Error)> findById(int id);
+        Task<(IEnumerable<GetDTO>? Value, string? Error)> getAll();
+        Task<(GetDTO? Value, string? Error)> edit(int id, SendDTO item);
+        Task<string?> add(SendDTO item);
+        Task<string?> delete(int id);
     }
 }

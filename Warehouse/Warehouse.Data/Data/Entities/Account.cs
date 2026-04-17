@@ -14,21 +14,17 @@ namespace Warehouse.Data.Entities
         [Key]
         public int Id { get; set; }
 
-
         [MaxLength(255)]
         public string PasswordHashed { get; set; } = null!;
 
         [EmailAddress, MaxLength(100)]
         public string Email { get; set; } = null!;
-
         
         public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset ModifiedTime { get; set; }
-        public DateTimeOffset? DeletedAt { get; set; }
-
-
-        public bool IsActive { get; set; } = true;
+        public DateTimeOffset LastModifiedTime { get; set; }
+        public DateTimeOffset? DeletedAtTime { get; set; }
         public bool IsDeleted { get; set; } = false;
+
 
         [Required]
         public AccountType AccountType { get; set; }
