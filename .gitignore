@@ -429,4 +429,3 @@ FodyWeavers.xsd
 
 # App settings with API keys and connection strings
 appsettings*.json
-!appsettings.example.json

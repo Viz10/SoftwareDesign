@@ -7,9 +7,9 @@ using Warehouse.Data.Entities;
 namespace Warehouse.Services
 {
     public abstract class GenericService<DataType,GetDTO,SendDTO> : IGenericService<GetDTO, SendDTO>
-    where DataType : class, IEntity /// like c++ requires(T t){t.Id;} costraint
+    where DataType : class, IEntity 
     where GetDTO : class
-    where SendDTO : class /// to be able to use null on them
+    where SendDTO : class
     {
         protected readonly WarehouseDbContext dbContext;
         protected readonly IMapper mapper;
@@ -48,16 +48,16 @@ namespace Warehouse.Services
         }
         public virtual async Task<string?> add(SendDTO item)
         {
-            try
+            try /// children class must ensure not duplicate
             {
                 var toBeAdded = mapper.Map<DataType>(item);
-                await dbContext.Set<DataType>().AddAsync(toBeAdded); /// as its generic cannot check weather is already there by name or other props.
+                await dbContext.Set<DataType>().AddAsync(toBeAdded);
                 await dbContext.SaveChangesAsync();
                 return null;
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
-                return "Already present!";
+                return ex.Message;
             }
             catch (Exception ex)
             {
@@ -66,18 +66,22 @@ namespace Warehouse.Services
         }
         public virtual async Task<(GetDTO? Value, string? Error)> edit(int id, SendDTO updated)
         {
-            try
+            try /// children class must ensure not duplicate
             {
                 var Old = await dbContext.Set<DataType>().FirstOrDefaultAsync(x => x.Id == id);
 
                 if (Old == null)
                 {
-                    return (null,"Not found"); /// not found
+                    return (null,"Not found");
                 }
                 mapper.Map(updated, Old);
                 Old.LastModifiedTime = DateTimeOffset.UtcNow;
                 await dbContext.SaveChangesAsync();
                 return (mapper.Map<GetDTO>(Old), null);
+            }
+            catch (DbUpdateException ex)
+            {
+                return (null, ex.Message);
             }
             catch (Exception ex)
             {

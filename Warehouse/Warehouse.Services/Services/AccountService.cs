@@ -15,7 +15,7 @@ namespace Warehouse.Services
         public async Task<(bool,string?,AccountViewDTO?)> login(LoginDTO item)
         {
             var account = await dbContext.Set<Account>()
-                .Where(a => a.Email == item.Email && a.IsActive)
+                .Where(a => a.Email == item.Email)
                 .FirstOrDefaultAsync();
 
             if (account is null)

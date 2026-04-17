@@ -16,8 +16,6 @@
 
 <GenericTable Model="@Model" CellNameValuePair="@CellNameValuePair"></GenericTable>
 
-
-
 @code {
     private string? error;
 
@@ -27,16 +25,15 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var task = InitCellNameValuePairs();
+        await InitCellNameValuePairs();
         InitTablePlugins();
-        await task;
     }
 
     public async Task InitCellNameValuePairs()
     {
-        var (Value,Error) = await itemservice.searchItemTypeByName(searchByName);
+        var (Value,Error) = await itemservice.searchItemTypeByPartialName(searchByName);
 
-        if(Error is not null)
+        if (Value is null)
         {
             error = Error;
             return;
@@ -47,7 +44,8 @@
             ["Id"] = dto.Id,
             ["Name"] = dto.Name,
             ["Description"] = dto.Description ?? "",
-            ["Base Price Per Item"] = dto.PricePerItem ?? 0
+            ["Base Price Per Item"] = dto.ReferencePricePerItem ?? 0,
+            ["Quantity"] = dto.Quantity
         });
 
     }
@@ -56,13 +54,14 @@
         Model = new GenericTablePlugIns()
         {
             TableTitle = "Items Table",
-            ColumnNames = new List<string> { "Id", "Name", "Description", "Base Price Per Item" },
+            ColumnNames = new List<string> { "Id", "Name", "Description", "Base Price Per Item", "Quantity" },
             BasePagePath = "/Items",
             OnDeleteCallback = EventCallback.Factory.Create<int>(this,HandleDelete),
             ExtraActions = new List<(string ButtonLabel, EventCallback<int> Action)> {("See Products", EventCallback.Factory.Create<int>(this,(id)=>Nav.NavigateTo("/"))) }
         };
     }
 
+    /// every time the reference CellNameValuePair changes , it propagates through components to rerender where its used
     public async Task HandleDelete(int id) {
         await itemservice.delete(id);
         await InitCellNameValuePairs(); /// refresh data reference

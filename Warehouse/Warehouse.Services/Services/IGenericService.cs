@@ -6,7 +6,7 @@ namespace Warehouse.Services
 
         Task<(GetDTO? Value, string? Error)> findById(int id);
         Task<(IEnumerable<GetDTO>? Value, string? Error)> getAll();
-        Task<(GetDTO? Value, string? Error)> edit(int id, SendDTO item);
+        Task<(GetDTO? Value,string? Error)> edit(int id, SendDTO item);
         Task<string?> add(SendDTO item);
         Task<string?> delete(int id);
     }

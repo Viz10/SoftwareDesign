@@ -4,37 +4,39 @@
 @using Warehouse.Web.Components.Reusable
 @using Warehouse.Services
 @using Warehouse.Web.Models
+@using AutoMapper;
 
 @inject ItemService itemservice
 @inject NavigationManager Nav
+@inject IMapper mapper
 
 <PageTitle>Add Item</PageTitle>
 
-<Alert error="@error"></Alert>
+<Alert error="@error" succes="@succes"></Alert>
 
-<EditForm OnInvalidSubmit="Edit" Model="NewItem">
+<EditForm OnValidSubmit="Edit" Model="NewItem">
     
     <DataAnnotationsValidator />
     <ValidationSummary />
 
-    <div>
-        <label>Name</label>
-        <InputText @bind-Value="NewItem.Name" />
+    <div class="form-group">
+        <label for="Name">Name</label>
+        <InputText id="Name" @bind-Value="NewItem.Name" class="form-control"></InputText>
     </div>
- 
-    <div>
-        <label>Price Per Item</label>
-        <InputNumber step="0.1" @bind-Value="NewItem.PricePerItem" />
+    <br />
+    <div class="form-group">
+        <label for="PricePerItem">Price Per Item</label>
+        <InputNumber id="PricePerItem" step="0.1" @bind-Value="NewItem.ReferencePricePerItem" class="form-control"></InputNumber>
     </div>
-
-    <div>
-        <label>Description</label>
-        <InputTextArea @bind-Value="NewItem.Description" />
+    <br />
+    <div class="form-group">
+        <label for="Description">Description</label>
+        <InputTextArea id="Description" @bind-Value="NewItem.Description" class="form-control"></InputTextArea>
     </div>
+    <br />
 
-
-    <button type="submit" disabled="@Loading">Submit</button>
-    <button type="button" @onclick="Return">Cancel</button>
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="button" class="btn btn-primary" @onclick="Return">Go Back</button>
 
 </EditForm>
 
@@ -42,45 +44,41 @@
 
 @code {
     [Parameter] public int Id { get; set; }
-
-    private string? error;
-    private bool Loading = false;
-
-    public ItemGetDTO NewItem = new();
+    public ItemSendDTO NewItem = new ItemSendDTO();
+    private string? error = null;
+    private string? succes = null;
 
     protected override async Task OnParametersSetAsync()
     {
-        var(Value,Msg) = await itemservice.findById(Id);
+        error = null;
+        succes = null;
 
+        var(Value,msg) = await itemservice.findById(Id); /// fetch old data
 
-
+        if(Value is null)
+        {
+            error = msg;
+            return;
+        }
+        mapper.Map(Value, NewItem);
     }
+    public async Task Edit()
+    {
+        error = null;
+        succes = null;
+        var (Value, msg) = await itemservice.edit(Id, NewItem);
 
+        if (Value is null)
+        {
+            error = msg;
+            return;
+        }
+        mapper.Map(Value, NewItem); /// refresh with new data
+        succes = "Successfully updated item!";
+    }
     public void Return()
     {
         Nav.NavigateTo("/Items");
     }
-
-    public async Task Edit()
-    {
-        
-    }
-    /*
-    public async Task Edit()
-    {
-        Loading = true;
-
-        var msg = await itemservice.edit(Id,NewItem);
-
-        if (msg is not null)
-        {
-            error = msg;
-            Loading = false;
-            return;
-        }
-        
-        Loading = false;
-        Return();
-    }*/
 }
 

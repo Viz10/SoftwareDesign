@@ -13,12 +13,13 @@ namespace Warehouse.Data.Entities
     {
         [Key]
         public int Id { get; set; }
-
+        
         [MaxLength(255)]
         public string PasswordHashed { get; set; } = null!;
-
+        
         [EmailAddress, MaxLength(100)]
         public string Email { get; set; } = null!;
+        
         
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset LastModifiedTime { get; set; }

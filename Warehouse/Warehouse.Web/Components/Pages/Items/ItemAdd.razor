@@ -10,39 +10,40 @@
 
 <PageTitle>Add Item</PageTitle>
 
-<Alert error="@error"></Alert>
+<Alert error="@error" succes="@success"></Alert>
 
-<EditForm OnInvalidSubmit="Add" Model="NewItem">
+<EditForm OnValidSubmit="Add" Model="NewItem">
     
     <DataAnnotationsValidator/>
     <ValidationSummary/>
 
-    <div>
-        <label>Name</label>
-        <InputText @bind-Value="NewItem.Name" />
+    <div class="form-group">
+        <label for="Name">Name</label>
+        <InputText id="Name" @bind-Value="NewItem.Name" class="form-control" ></InputText>
     </div>
- 
-    <div>
-        <label>Price Per Item</label>
-        <InputNumber step="0.1" @bind-Value="NewItem.PricePerItem" />
+    <br/>
+    <div class="form-group">
+        <label for="PricePerItem">Price Per Item</label>
+        <InputNumber id="PricePerItem" step="0.1" @bind-Value="NewItem.ReferencePricePerItem" class="form-control"></InputNumber>
     </div>
+    <br />
+    <div class="form-group">
+        <label for="Description">Description</label>
+        <InputTextArea id="Description" @bind-Value="NewItem.Description" class="form-control"></InputTextArea>
+    </div>
+    <br />
 
-    <div>
-        <label>Description</label>
-        <InputTextArea @bind-Value="NewItem.Description"/>
-    </div>
-
-    <button type="submit" disabled="@Loading">Submit</button>
-    <button type="button" @onclick="Return">Cancel</button>
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="button" class="btn btn-primary" @onclick="Return">Go Back</button>
 
 </EditForm>
 
 
 
 @code {
-    private string? error;
-    private bool Loading = false;
-    public ItemSendDTO NewItem = new();
+    private string? error=null;
+    private string? success=null;
+    public ItemSendDTO NewItem = new ItemSendDTO();
 
     public void Return()
     {
@@ -50,18 +51,17 @@
     }
     public async Task Add()
     {
-        Loading = true;
+        error = null;
+        success = null;
+        var msg = await itemservice.add(NewItem);
 
-        var msg =  await itemservice.add(NewItem);
-
-        if(msg is not null)
+        if (msg is not null)
         {
             error = msg;
-            Loading = false;
+            NewItem = new ItemSendDTO();
             return;
         }
-        
-        Loading = false;
-        Return();
+        NewItem = new ItemSendDTO();
+        success = "Successfully added new item!";
     }
 }

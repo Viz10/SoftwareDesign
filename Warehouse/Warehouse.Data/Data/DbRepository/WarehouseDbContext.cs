@@ -4,8 +4,8 @@ using Warehouse.Data.Entities;
 namespace Warehouse.Data.DbRepository
 {
 
-    ///Add-Migration Init -Project SkyBuy.Data -StartupProject SkyBuy
-    ///Update-database -Project SkyBuy.Data -StartupProject SkyBuy
+    ///Add-Migration Init -Project Warehouse.Data -StartupProject Warehouse.Web
+    ///Update-database -Project Warehouse.Data -StartupProject Warehouse.Web
 
     public class WarehouseDbContext : DbContext
     {
@@ -24,18 +24,18 @@ namespace Warehouse.Data.DbRepository
             item.HasQueryFilter(u => !u.IsDeleted);
             item.HasIndex(x => x.Name).IsUnique().HasFilter("[IsDeleted] = 0");
             item.Property(p => p.LastModifiedTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
-            item.Property(p => p.PricePerItem).HasColumnType("decimal(18,2)");
+            item.Property(p => p.ReferencePricePerItem).HasColumnType("decimal(18,2)");
             
 
             var stockUnit = modelBuilder.Entity<StockUnit>();
             stockUnit.HasQueryFilter(u => !u.IsDeleted);
             stockUnit.HasIndex(x => x.SerialNumber).IsUnique().HasFilter("[IsDeleted] = 0");
             stockUnit.Property(p => p.LastModifiedTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
-            stockUnit.Property(p => p.ActualPrice).HasColumnType("decimal(18,2)");
+            stockUnit.Property(p => p.CurrentPrice).HasColumnType("decimal(18,2)");
 
 
             var stock = modelBuilder.Entity<Stock>();
-            stock.HasQueryFilter(s => !s.Item.IsDeleted);
+            stock.HasQueryFilter(s => !s.IsDeleted && !s.Item.IsDeleted);
             stock.ToTable(t => t.HasCheckConstraint("pozitive_quantity_constraint","[Quantity] >= 0"));
 
 
@@ -44,7 +44,6 @@ namespace Warehouse.Data.DbRepository
             account.HasIndex(a => a.Email).IsUnique().HasFilter("[IsDeleted] = 0");
             account.Property(p => p.LastModifiedTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
             account.Property(p => p.CreatedAt).HasDefaultValueSql("SYSDATETIMEOFFSET()");
-
         }
     }
 }

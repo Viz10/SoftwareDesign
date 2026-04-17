@@ -10,12 +10,11 @@ namespace Warehouse.Data.Entities
         public int Id { get; set; } 
 
         public int ItemId { get; set; } 
-        public Item Item { get; set; } = null!;
+        public Item Item { get; set; } = null!; // FK
 
         public string SerialNumber { get; set; } = null!;
         public string? Note { get; set; }
-
-        public decimal? ActualPrice { get; set; }
+        public decimal? CurrentPrice { get; set; }
 
         public DateTimeOffset? DeletedAtTime { get; set; }
         public DateTimeOffset LastModifiedTime { get; set; }

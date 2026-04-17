@@ -25,7 +25,7 @@ namespace Warehouse.Services
                 {
                     Id = u.Id,
                     Name = u.Item.Name,
-                    ActualPrice = u.ActualPrice,
+                    ActualPrice = u.CurrentPrice,
                     SerialNumber = u.SerialNumber,
                     Note = u.Note,
                     Status = u.Status
@@ -59,7 +59,7 @@ namespace Warehouse.Services
                         ItemId = added.ItemId,
                         SerialNumber = serial,
                         Status = UnitStatus.Available,
-                        ActualPrice = added.ActualPrice
+                        CurrentPrice = added.ActualPrice
                     });
                 }
 
@@ -116,7 +116,7 @@ namespace Warehouse.Services
                 {
                     Id = u.Id,
                     Name = u.Item.Name,
-                    ActualPrice = u.ActualPrice,
+                    ActualPrice = u.CurrentPrice,
                     SerialNumber = u.SerialNumber,
                     Note = u.Note,
                     Status = u.Status
@@ -152,7 +152,7 @@ namespace Warehouse.Services
                 {
                     Id = u.Id,
                     Name = u.Item.Name,
-                    ActualPrice = u.ActualPrice,
+                    ActualPrice = u.CurrentPrice,
                     SerialNumber = u.SerialNumber,
                     Note = u.Note,
                     Status = u.Status
@@ -183,7 +183,7 @@ namespace Warehouse.Services
                 {
                     Id = u.Id,
                     Name = u.Item.Name,
-                    ActualPrice = u.ActualPrice,
+                    ActualPrice = u.CurrentPrice,
                     SerialNumber = u.SerialNumber,
                     Note = u.Note,
                     Status = u.Status

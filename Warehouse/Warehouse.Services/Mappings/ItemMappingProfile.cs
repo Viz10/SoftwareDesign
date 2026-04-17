@@ -8,8 +8,13 @@ namespace Warehouse.Mappings
     {
         public ItemMappingProfile()
         {
-            CreateMap<Item, ItemGetDTO>();       
+            CreateMap<Item, ItemGetDTO>()
+            .ForMember(dest => dest.Quantity,
+             opt => opt.MapFrom(src => src.Stocks.Sum(s => s.Quantity)));
+            /// the rest of matching members just copy
+
             CreateMap<ItemSendDTO, Item>();         
+            CreateMap<ItemGetDTO, ItemSendDTO>();         
         }
     }
 }

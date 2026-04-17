@@ -1,10 +1,10 @@
 ﻿
-<div class="card p-3">
+<div class="input-group mb-3">
     <InputText class="form-control" placeholder="Search by name" @bind-Value="searchByName"></InputText>
-    <button class="btn btn-success" @onclick="() => PassSearchName.InvokeAsync(searchByName)">Search</button>
+    <button class="btn btn-success" type="button" @onclick="() => PassSearchName.InvokeAsync(searchByName)">Search</button>
 </div>
 
 @code {
-    public EventCallback<string> PassSearchName { get; set; }
+    [Parameter] public EventCallback<string> PassSearchName { get; set; }
     private string? searchByName { get; set; }
 }

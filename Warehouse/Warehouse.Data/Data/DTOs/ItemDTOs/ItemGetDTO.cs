@@ -6,7 +6,8 @@ namespace Warehouse.Data.DTOs.ItemDTOs
         {
             public int Id { get; set; }
             public string Name { get; set; } = null!;
-            public decimal? PricePerItem { get; set; }
+            public decimal? ReferencePricePerItem { get; set; }
             public string? Description { get; set; }
-        }
+            public int Quantity { get; set; } = 0;
+    }
 }
