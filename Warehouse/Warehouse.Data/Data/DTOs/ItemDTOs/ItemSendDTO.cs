@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Warehouse.Data.DTOs.ItemDTOs
+namespace Warehouse.Data.Data.DTOs.ItemDTOs
 {
     public class ItemSendDTO 
     {

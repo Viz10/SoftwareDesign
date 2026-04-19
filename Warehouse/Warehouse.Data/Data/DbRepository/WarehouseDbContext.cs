@@ -28,7 +28,7 @@ namespace Warehouse.Data.DbRepository
             
 
             var stockUnit = modelBuilder.Entity<StockUnit>();
-            stockUnit.HasQueryFilter(u => !u.IsDeleted);
+            stockUnit.HasQueryFilter(u => !u.IsDeleted && !u.Item.IsDeleted);
             stockUnit.HasIndex(x => x.SerialNumber).IsUnique().HasFilter("[IsDeleted] = 0");
             stockUnit.Property(p => p.LastModifiedTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
             stockUnit.Property(p => p.CurrentPrice).HasColumnType("decimal(18,2)");

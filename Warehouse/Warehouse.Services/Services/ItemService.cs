@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
+using System.Collections;
 using System.Diagnostics;
+using Warehouse.Data.Data.DTOs.ItemDTOs;
 using Warehouse.Data.DbRepository;
-using Warehouse.Data.DTOs.ItemDTOs;
 using Warehouse.Data.Entities;
 
 namespace Warehouse.Services
@@ -10,30 +12,28 @@ namespace Warehouse.Services
     public class ItemService : GenericService<Item, ItemGetDTO, ItemSendDTO>
     {
         public ItemService(WarehouseDbContext dbContext, IMapper mapper) : base(dbContext, mapper) { }
-       
-        public async Task<(List<ItemGetDTO>? Value,string? Error)> searchItemTypeByPartialName(string? name)
+
+        public async Task<(List<ItemGetDTO>? Value, string? Error)> searchItemTypeByPartialName(string? name)
         {
-
-            List<Item> result = new List<Item>();
-
             try
             {
-                if (string.IsNullOrWhiteSpace(name) || name.Length < 2)
+                var query = dbContext.Items.AsQueryable();
+
+                if (!string.IsNullOrWhiteSpace(name) && name.Length >= 2)
                 {
-                    result = await dbContext.Items.ToListAsync(); /// return all or nothing
+                    query = query.Where(item => item.Name.ToLower().Contains(name.ToLower()));
                 }
-                else
-                {
-                    result = await dbContext.Items
-                                            .Where(item => item.Name.ToLower().Contains(name.ToLower()))
-                                            .ToListAsync(); /// partial result
-                }
-                return (mapper.Map<List<ItemGetDTO>>(result),null);
+
+                var result = await query
+                    .ProjectTo<ItemGetDTO>(mapper.ConfigurationProvider)
+                    .ToListAsync(); /// return all
+
+                return (result, null);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return (null, ex.Message);
             }
-            
         }
 
         public override async Task<string?> add(ItemSendDTO item)
@@ -68,6 +68,42 @@ namespace Warehouse.Services
             }
 
             return await base.edit(id, updated); /// clear
+        }
+        public override async Task<string?> delete(int id)
+        {
+            try
+            {
+                var item = await dbContext.Items
+                    .Include(i => i.Stock)
+                    .FirstOrDefaultAsync(i => i.Id == id);
+
+                if (item == null)
+                {
+                    return "Not present!";
+                }
+
+                /// Prevent deletion if StockUnits exist
+                if (item.StockUnits.Any(su=>!su.IsDeleted))
+                {
+                    return "Cannot delete item: There are active Stock Units linked to it.";
+                }
+
+                /// No Stock units left , safe to delete
+
+                item.Stock.Quantity = 0;
+                item.Stock.IsDeleted = true; /// delete stock data
+                item.Stock.DeletedAtTime = DateTimeOffset.UtcNow;
+                item.Stock.LastModifiedTime = DateTimeOffset.UtcNow;
+
+                var res = await base.delete(id); /// delete item 
+                if (res is not null) return res;
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
         }
 
         private async Task<(bool IsDuplicate, string? Error)> isDuplicate(string name,int? editItemId)

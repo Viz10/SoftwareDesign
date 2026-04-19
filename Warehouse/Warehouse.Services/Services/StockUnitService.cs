@@ -1,172 +1,141 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
-using System.Data.Common;
-using System.Diagnostics;
+using Warehouse.Data.Data.DTOs.StockUnitDTOs;
 using Warehouse.Data.DbRepository;
-using Warehouse.Data.DTOs.ItemDTOs;
-using Warehouse.Data.DTOs.StockUnitDTOs;
 using Warehouse.Data.Entities;
 
 namespace Warehouse.Services
 {
     
-    public class StockUnitService : GenericService<StockUnit,StockUnitGetDTO,StockUnitSendDTO>
+    public class StockUnitService : GenericService<StockUnit,StockUnitGetDTO, StockUnitUpdateDTO>
     {
         public StockUnitService(WarehouseDbContext dbContext, IMapper mapper) : base(dbContext, mapper) { }
 
-        
-        public async override Task<(IEnumerable<StockUnitGetDTO>? Value, string? Error)> getAll()
+        public override Task<string?> add(StockUnitUpdateDTO added)
+         => throw new NotSupportedException("Use add(StockUnitSendDTO) instead.");
+
+        public async Task<string?> add(StockUnitSendDTO added)
         {
+
+            using var tranzaction = await dbContext.Database.BeginTransactionAsync();
+
             try
             {
-                var values = await dbContext.StockUnits
-                .Select(u => new StockUnitGetDTO
-                {
-                    Id = u.Id,
-                    Name = u.Item.Name,
-                    ActualPrice = u.CurrentPrice,
-                    SerialNumber = u.SerialNumber,
-                    Note = u.Note,
-                    Status = u.Status
-                })
-                .ToListAsync();
-
-                return (values, null);
-
-            }
-            catch (Exception ex)
-            {
-                return (null,ex.Message);
-            }
-        }
-        public async override Task<string?> add(StockUnitSendDTO added)
-        {
-            try
-            {
-                var units = new List<StockUnit>();
+                var unitlocalUnits = new List<StockUnit>();
 
                 for (int i = 0; i < added.Quantity; i++)
                 {
-                    string serial;
-                    do
-                    {
-                        serial = Guid.NewGuid().ToString("N").ToUpper()[..12];
-                    } while (await dbContext.StockUnits.AnyAsync(u => u.SerialNumber == serial));
-
-                    units.Add(new StockUnit
+                    unitlocalUnits.Add(new StockUnit
                     {
                         ItemId = added.ItemId,
-                        SerialNumber = serial,
+                        SerialNumber = Guid.NewGuid().ToString("N").ToUpper()[..12],
                         Status = UnitStatus.Available,
-                        CurrentPrice = added.ActualPrice
+                        CurrentPrice = added.CurrentPrice,
+                        Note=added.Note
                     });
                 }
 
-                await dbContext.StockUnits.AddRangeAsync(units);
+                //// ADD STOCK UNITS
+                await dbContext.StockUnits.AddRangeAsync(unitlocalUnits);
 
+
+
+                //// UPDATE STOCK QUANTITY
                 var stock = await dbContext.Stocks.FirstOrDefaultAsync(s => s.ItemId == added.ItemId);
-
+                
                 if (stock == null)
                     dbContext.Stocks.Add(new Stock { ItemId = added.ItemId, Quantity = added.Quantity });
                 else
                     stock.Quantity += added.Quantity;
 
                 await dbContext.SaveChangesAsync();
+                await tranzaction.CommitAsync();
+
                 return null;
-            }
-            catch (DbException ex)
-            {
-                return ex.Message;
             }
             catch (Exception ex)
             {
+                await tranzaction.RollbackAsync();
                 return ex.Message;
             }
         }
         public async override Task<string?> delete(int id)
         {
-            var unit = await dbContext.StockUnits.FindAsync(id);
-            if (unit == null) return "Not found";
-
-            unit.IsDeleted = true;
-            unit.DeletedAtTime = DateTimeOffset.UtcNow;
-            unit.LastModifiedTime = DateTimeOffset.UtcNow;
-
-            var stock = await dbContext.Stocks.FirstOrDefaultAsync(s => s.ItemId == unit.ItemId);
-            if (stock != null && stock.Quantity > 0)
-                stock.Quantity--;
-
-            await dbContext.SaveChangesAsync();
-            return null;
-        }
-
-        public async Task<(StockUnitGetDTO? Value, string? Error)> searchStockItemByBarcode(string barCode)
-        {
-            if (string.IsNullOrWhiteSpace(barCode) || barCode.Length < 2)
-            {
-                return (null,"Invalid Barcode");
-            }
+            await using var transaction = await dbContext.Database.BeginTransactionAsync();
 
             try
             {
-                var Result = await dbContext.StockUnits
-                .Where(element => element.SerialNumber.ToLower().Contains(barCode.ToLower()))
-                .Select(u => new StockUnitGetDTO
-                {
-                    Id = u.Id,
-                    Name = u.Item.Name,
-                    ActualPrice = u.CurrentPrice,
-                    SerialNumber = u.SerialNumber,
-                    Note = u.Note,
-                    Status = u.Status
-                }).FirstOrDefaultAsync();
+                var (stockItem, error) = await base.findById(id);
+                if (stockItem is null) return error;
 
-                    if (Result is null)
-                    {
-                        return (null, "Not Found");
-                    }
-                    return (Result, null);
-            }
-            catch (DbException ex)
-            {
-                return (null,ex.Message);
+                var stock = await dbContext.Stocks.FirstOrDefaultAsync(s => s.Item.Name == stockItem.Name);
+
+                if (stock != null && stock.Quantity > 0)
+                    stock.Quantity--;
+
+                var res = await base.delete(id); /// saves both changes
+                if (res is not null) return res;
+
+                await transaction.CommitAsync();
+                return null;
             }
             catch (Exception ex)
             {
-                return (null,ex.Message);
+                await transaction.RollbackAsync();
+                return ex.Message;
+            }
+        }
+  
+
+        public async Task<(string? Value, string? Msg)> GetItemName(int Id)
+        {
+            string? name = await dbContext.Items.Where(i => i.Id == Id).Select(su=>su.Name).FirstOrDefaultAsync();
+            if (name == null) return (null, "Item name not found");
+            return (name, null);
+        }
+        public async Task<(List<StockUnitGetDTO>? Value, string? Error)> searchStockItemByBarcode(string? barCode)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(barCode))
+                {
+                    return (null, "Not Found!");
+                }
+
+                var result = await dbContext.StockUnits
+                    .Where(su => su.SerialNumber.ToLower().Equals(barCode.ToLower()))
+                    .ProjectTo<StockUnitGetDTO>(mapper.ConfigurationProvider)
+                    .ToListAsync();
+
+                if (!result.Any())
+                {
+                    return (null, $"No item found with barcode: {barCode}");
+                }
+
+                return (result, null);
+            }
+            catch (Exception ex)
+            {
+                return (null, ex.Message);
             }
         }
         public async Task<(List<StockUnitGetDTO>? Value, string? Error)> searchStockItemByItemName(string name)
         {
-            if (string.IsNullOrWhiteSpace(name) || name.Length < 2)
-            {
-                return (null, "Invalid Name");
-            }
-
             try
             {
-                var Results = await dbContext.StockUnits
-                .Where(element => element.Item.Name.ToLower().Contains(name.ToLower()))
-                .Select(u => new StockUnitGetDTO
-                {
-                    Id = u.Id,
-                    Name = u.Item.Name,
-                    ActualPrice = u.CurrentPrice,
-                    SerialNumber = u.SerialNumber,
-                    Note = u.Note,
-                    Status = u.Status
-                }).ToListAsync();
+                var query = dbContext.StockUnits.AsQueryable();
 
-                if (Results.Count()==0)
+                if (!string.IsNullOrWhiteSpace(name) && name.Length >= 2)
                 {
-                    return (null, "Not Found");
+                    query = query.Where(su => su.Item.Name.ToLower().Contains(name.ToLower()));
                 }
-                return (Results, null);
-            }
-            catch (DbException ex)
-            {
-                return (null, ex.Message);
+
+                var result = await query
+                    .ProjectTo<StockUnitGetDTO>(mapper.ConfigurationProvider)
+                    .ToListAsync();
+
+                return (result, null);
             }
             catch (Exception ex)
             {
@@ -177,27 +146,17 @@ namespace Warehouse.Services
         {
             try
             {
-                var Results = await dbContext.StockUnits
-                .Where(element => element.ItemId==itemId)
-                .Select(u => new StockUnitGetDTO
-                {
-                    Id = u.Id,
-                    Name = u.Item.Name,
-                    ActualPrice = u.CurrentPrice,
-                    SerialNumber = u.SerialNumber,
-                    Note = u.Note,
-                    Status = u.Status
-                }).ToListAsync();
+                var result = await dbContext.StockUnits
+                    .Where(su => su.ItemId == itemId)
+                    .ProjectTo<StockUnitGetDTO>(mapper.ConfigurationProvider)
+                    .ToListAsync();
 
-                if (Results.Count() == 0)
+                if (!result.Any())
                 {
-                    return (null, "Not Found");
+                    return (null, "Not found");
                 }
-                return (Results, null);
-            }
-            catch (DbException ex)
-            {
-                return (null, ex.Message);
+
+                return (result, null);
             }
             catch (Exception ex)
             {

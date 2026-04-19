@@ -66,7 +66,7 @@ namespace Warehouse.Services
         }
         public virtual async Task<(GetDTO? Value, string? Error)> edit(int id, SendDTO updated)
         {
-            try /// children class must ensure not duplicate
+            try /// children class must ensure if it can be duplicate
             {
                 var Old = await dbContext.Set<DataType>().FirstOrDefaultAsync(x => x.Id == id);
 

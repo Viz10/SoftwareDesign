@@ -134,7 +134,8 @@ namespace Warehouse.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ItemId");
+                    b.HasIndex("ItemId")
+                        .IsUnique();
 
                     b.ToTable("Stocks", t =>
                         {
@@ -191,8 +192,8 @@ namespace Warehouse.Data.Migrations
             modelBuilder.Entity("Warehouse.Data.Entities.Stock", b =>
                 {
                     b.HasOne("Warehouse.Data.Entities.Item", "Item")
-                        .WithMany("Stocks")
-                        .HasForeignKey("ItemId")
+                        .WithOne("Stock")
+                        .HasForeignKey("Warehouse.Data.Entities.Stock", "ItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -212,9 +213,10 @@ namespace Warehouse.Data.Migrations
 
             modelBuilder.Entity("Warehouse.Data.Entities.Item", b =>
                 {
-                    b.Navigation("StockUnits");
+                    b.Navigation("Stock")
+                        .IsRequired();
 
-                    b.Navigation("Stocks");
+                    b.Navigation("StockUnits");
                 });
 #pragma warning restore 612, 618
         }

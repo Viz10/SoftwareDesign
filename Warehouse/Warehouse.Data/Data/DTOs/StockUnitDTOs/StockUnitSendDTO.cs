@@ -1,16 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Warehouse.Data.DTOs.StockUnitDTOs
+namespace Warehouse.Data.Data.DTOs.StockUnitDTOs
 {
-    public class StockUnitSendDTO
+    public class StockUnitSendDTO : StockUnitUpdateDTO
     {
-        public int ItemId { get; set; }
-
-        [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0!")]
-        public decimal? ActualPrice { get; set; }
-
         [Required(ErrorMessage = "Quantity needed!")]
-        [Range(1, double.MaxValue, ErrorMessage = "Quantity must be greater than 0!")]
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than 0!")]
         public int Quantity { get; set; }
     }
 }

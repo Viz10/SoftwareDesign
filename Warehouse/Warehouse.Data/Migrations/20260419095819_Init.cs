@@ -116,7 +116,8 @@ namespace Warehouse.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Stocks_ItemId",
                 table: "Stocks",
-                column: "ItemId");
+                column: "ItemId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_StockUnits_ItemId",

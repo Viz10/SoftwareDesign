@@ -1,12 +1,12 @@
-﻿@page "/Items/Edit/{Id:int}"
+﻿@page "/StockUnits/{ItemId:int}/Edit/{Id:int}"
 
-@using Warehouse.Data.Data.DTOs.ItemDTOs
+@using Warehouse.Data.Data.DTOs.StockUnitDTOs
 @using Warehouse.Web.Components.Reusable
 @using Warehouse.Services
 @using Warehouse.Web.Models
 @using AutoMapper;
 
-@inject ItemService itemservice
+@inject StockUnitService stock_unit_service
 @inject NavigationManager Nav
 @inject IMapper mapper
 
@@ -20,31 +20,36 @@
     <ValidationSummary />
 
     <div class="form-group">
-        <label for="Name">Name</label>
-        <InputText id="Name" @bind-Value="NewItem.Name" class="form-control"></InputText>
+        <label for="CurrentPrice">Current Price</label>
+        <InputNumber id="CurrentPrice" step="0.1" @bind-Value="NewItem.CurrentPrice" class="form-control"></InputNumber>
     </div>
     <br />
     <div class="form-group">
-        <label for="PricePerItem">Price Per Item</label>
-        <InputNumber id="PricePerItem" step="0.1" @bind-Value="NewItem.ReferencePricePerItem" class="form-control"></InputNumber>
+        <label for="Note">Note</label>
+        <InputTextArea id="Note" @bind-Value="NewItem.Note" class="form-control"></InputTextArea>
     </div>
     <br />
     <div class="form-group">
-        <label for="Description">Description</label>
-        <InputTextArea id="Description" @bind-Value="NewItem.Description" class="form-control"></InputTextArea>
+        <label for="Status">Status</label>
+        <InputSelect id="Status" @bind-Value="NewItem.Status" class="form-control">
+            @foreach (var status in Enum.GetValues<Warehouse.Data.Entities.UnitStatus>())
+            {
+                <option value="@status">@status</option>
+            }
+        </InputSelect>
     </div>
     <br />
-
     <button type="submit" class="btn btn-primary">Submit</button>
     <button type="button" class="btn btn-primary" @onclick="Return">Go Back</button>
-
 </EditForm>
 
 
 
 @code {
     [Parameter] public int Id { get; set; }
-    public ItemSendDTO NewItem = new ItemSendDTO();
+    [Parameter] public int ItemId { get; set; }
+
+    public StockUnitUpdateDTO NewItem = new StockUnitUpdateDTO();
     private string? error = null;
     private string? succes = null;
 
@@ -53,9 +58,9 @@
         error = null;
         succes = null;
 
-        var(Value,msg) = await itemservice.findById(Id); /// fetch old data
+        var (Value, msg) = await stock_unit_service.findById(Id);
 
-        if(Value is null)
+        if (Value is null)
         {
             error = msg;
             return;
@@ -66,19 +71,21 @@
     {
         error = null;
         succes = null;
-        var (Value, msg) = await itemservice.edit(Id, NewItem);
+
+        NewItem.ItemId = ItemId;
+        var (Value, msg) = await stock_unit_service.edit(Id, NewItem);
 
         if (Value is null)
         {
             error = msg;
             return;
         }
-        mapper.Map(Value, NewItem); /// refresh with new data
+        mapper.Map(Value, NewItem);
         succes = "Successfully updated item!";
     }
     public void Return()
     {
-        Nav.NavigateTo("/Items");
+        Nav.NavigateTo($"/StockUnits/{ItemId}");
     }
 }
 

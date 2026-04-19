@@ -1,6 +1,6 @@
 ﻿@page "/Items"
 
-@using Warehouse.Data.DTOs.ItemDTOs
+@using Warehouse.Data.Data.DTOs.ItemDTOs
 @using Warehouse.Web.Components.Reusable
 @using Warehouse.Services
 @using Warehouse.Web.Models
@@ -12,7 +12,7 @@
 
 <Alert error="@error"></Alert>
 
-<SearchBar PassSearchName="HandleSearchByName"></SearchBar>
+<SearchBar PassSearchName="HandleSearchByName" Placeholder="Search by name"></SearchBar>
 
 <GenericTable Model="@Model" CellNameValuePair="@CellNameValuePair"></GenericTable>
 
@@ -36,6 +36,7 @@
         if (Value is null)
         {
             error = Error;
+            CellNameValuePair = new List<Dictionary<string, object>>();
             return;
         }
 
@@ -55,15 +56,26 @@
         {
             TableTitle = "Items Table",
             ColumnNames = new List<string> { "Id", "Name", "Description", "Base Price Per Item", "Quantity" },
-            BasePagePath = "/Items",
+            EditBasePagePath = "/Items/Edit",
+            AddPagePath = "/Items/Add",
             OnDeleteCallback = EventCallback.Factory.Create<int>(this,HandleDelete),
-            ExtraActions = new List<(string ButtonLabel, EventCallback<int> Action)> {("See Products", EventCallback.Factory.Create<int>(this,(id)=>Nav.NavigateTo("/"))) }
+            ExtraActions = new List<(string ButtonLabel, EventCallback<int> Action)> { ("See Products", EventCallback.Factory.Create<int>(this, (id) => Nav.NavigateTo($"/StockUnits/{id}"))) }
         };
     }
 
     /// every time the reference CellNameValuePair changes , it propagates through components to rerender where its used
     public async Task HandleDelete(int id) {
-        await itemservice.delete(id);
+
+        error = null;
+
+        string? result = await itemservice.delete(id);
+
+        if (result is not null)
+        {
+            error = result;
+            return;
+        }
+
         await InitCellNameValuePairs(); /// refresh data reference
     }
     public async Task HandleSearchByName(string? name)

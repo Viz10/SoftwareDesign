@@ -17,6 +17,6 @@ namespace Warehouse.Data.Entities
         public bool IsDeleted { get; set; } = false;
 
         public List<StockUnit> StockUnits { get; set; } = new List<StockUnit>();
-        public List<Stock> Stocks { get; set; } = new List<Stock>();
+        public Stock Stock { get; set; } = new Stock();
     }
 }

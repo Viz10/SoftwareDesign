@@ -1,0 +1,111 @@
+﻿@page "/StockUnits/{ItemId:int}"
+
+@using System.Diagnostics
+@using Warehouse.Data.Data.DTOs.ItemDTOs
+@using Warehouse.Data.Data.DTOs.StockUnitDTOs
+@using Warehouse.Web.Components.Reusable
+@using Warehouse.Services
+@using Warehouse.Web.Models
+
+@inject StockUnitService service
+@inject NavigationManager Nav
+
+<h1>Warehouse Shelf Items for @_name</h1>
+
+<Alert error="@_error"></Alert>
+
+<br/>
+<SearchBar PassSearchName="HandleSearchByBarcode" Placeholder="Search by barcode"></SearchBar>
+
+<GenericTable Model="@Model" CellNameValuePair="@CellNameValuePair"></GenericTable>
+
+@code {
+    [Parameter] public int ItemId { get; set; }
+    private string? _error;
+    private string? _name { get; set; }
+
+    public string? searchByBarcode { get; set; }
+
+    public IEnumerable<Dictionary<string, object>> CellNameValuePair { get; set; } = default!;
+    public GenericTablePlugIns Model { get; set; } = default!;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var (Value,Msg) = await service.GetItemName(ItemId);
+
+        if (Value is null){
+            _error = Msg;
+            return;
+        }
+        Debug.Print(Value);
+        _name = Value;
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        await InitCellsById();
+        InitTablePlugins();
+    }
+
+    public async Task InitCellsById()
+    {
+        var result = await service.searchStockItemByItemId(ItemId);
+        InitList(result);
+    }
+    public async Task InitCellsByBarcode()
+    {
+        var result = await service.searchStockItemByBarcode(searchByBarcode);
+        InitList(result);
+    }
+    
+    public void InitTablePlugins()
+    {
+        Model = new GenericTablePlugIns()
+        {
+            TableTitle = "Shelf items Table",
+            ColumnNames = new List<string> { "Id", "Name", "Note", "Current Price", "Serial Number", "Status" },
+            EditBasePagePath = $"/StockUnits/{ItemId}/Edit",
+            AddPagePath = $"/StockUnits/Add/{ItemId}",
+            OnDeleteCallback = EventCallback.Factory.Create<int>(this, HandleDelete),
+            ExtraActions = null
+        };
+    }
+    public void InitList((List<StockUnitGetDTO>? Value, string? Error) pair)
+    {
+        if (pair.Value is null)
+        {
+            _error = pair.Error;
+            CellNameValuePair = new List<Dictionary<string, object>>();
+            return;
+        }
+
+        CellNameValuePair = pair.Value.Select(dto => new Dictionary<string, object>
+        {
+            ["Id"] = dto.Id,
+            ["Name"] = dto.Name,
+            ["Note"] = dto.Note ?? "",
+            ["Current Price"] = dto.CurrentPrice ?? 0,
+            ["Serial Number"] = dto.SerialNumber,
+            ["Status"] = dto.Status.ToString()
+        });
+    }
+
+    public async Task HandleDelete(int id)
+    {
+        _error = null;
+
+        string? result = await service.delete(id);
+
+        if (result is not null)
+        {
+            _error = result;
+            return;
+        }
+
+        await InitCellsById(); /// refresh data reference
+    }
+    public async Task HandleSearchByBarcode(string? barcode)
+    {
+        searchByBarcode = barcode;
+        await InitCellsByBarcode();
+    }
+}
