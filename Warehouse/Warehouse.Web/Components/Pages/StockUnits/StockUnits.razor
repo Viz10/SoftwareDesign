@@ -3,6 +3,7 @@
 @using System.Diagnostics
 @using Warehouse.Data.Data.DTOs.ItemDTOs
 @using Warehouse.Data.Data.DTOs.StockUnitDTOs
+@using Warehouse.Services.Services.Exports
 @using Warehouse.Web.Components.Reusable
 @using Warehouse.Services
 @using Warehouse.Web.Models
@@ -19,6 +20,10 @@
 
 <GenericTable Model="@Model" CellNameValuePair="@CellNameValuePair"></GenericTable>
 
+<br/>
+
+<ExportButtons eventCallback="Export"></ExportButtons>
+
 @code {
     [Parameter] public int ItemId { get; set; }
     private string? _error;
@@ -26,6 +31,7 @@
 
     public string? searchByBarcode { get; set; }
 
+    List<StockUnitGetDTO> Values = new List<StockUnitGetDTO>();
     public IEnumerable<Dictionary<string, object>> CellNameValuePair { get; set; } = default!;
     public GenericTablePlugIns Model { get; set; } = default!;
 
@@ -56,7 +62,7 @@
         var result = await service.searchStockItemByBarcode(searchByBarcode);
         InitList(result);
     }
-    
+
     public void InitTablePlugins()
     {
         Model = new GenericTablePlugIns()
@@ -78,6 +84,7 @@
             return;
         }
 
+        Values = pair.Value;
         CellNameValuePair = pair.Value.Select(dto => new Dictionary<string, object>
         {
             ["Id"] = dto.Id,
@@ -107,5 +114,14 @@
     {
         searchByBarcode = barcode;
         await InitCellsByBarcode();
+    }
+    
+    [Inject] private Export ExportService { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+ 
+    private async Task Export(string format)
+    {
+        var content = await ExportService.ExportData(Values, format);
+        await JS.InvokeVoidAsync("downloadFile", $"stockunits.{format}", content);
     }
 }

@@ -6,12 +6,19 @@ using System.Diagnostics;
 using Warehouse.Data.Data.DTOs.ItemDTOs;
 using Warehouse.Data.DbRepository;
 using Warehouse.Data.Entities;
+using Warehouse.Services.Services.Events;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Warehouse.Services
 {
     public class ItemService : GenericService<Item, ItemGetDTO, ItemSendDTO>
     {
-        public ItemService(WarehouseDbContext dbContext, IMapper mapper) : base(dbContext, mapper) { }
+        private readonly WarehouseEventBus _eventBus;
+
+        public ItemService(WarehouseDbContext dbContext, IMapper mapper, WarehouseEventBus eventBus) : base(dbContext, mapper)
+        {
+            _eventBus = eventBus;
+        }
 
         public async Task<(List<ItemGetDTO>? Value, string? Error)> searchItemTypeByPartialName(string? name)
         {
@@ -51,7 +58,21 @@ namespace Warehouse.Services
                 return "Duplicate Item";
             }
 
-            return await base.add(item); /// clear
+            var res =  await base.add(item); /// clear
+
+            if(res is not null)
+            {
+                return res;
+            }
+
+            _eventBus.Publish(new WarehouseEvent
+            {
+                EntityType = "Item",
+                Action = "Added",
+                Description = $"Added :{item.Name}\n{item.ReferencePricePerItem}\n{item.Description}",
+            });
+
+            return res;
         }
         public override async Task<(ItemGetDTO? Value, string? Error)> edit(int id, ItemSendDTO updated)
         {
@@ -67,7 +88,21 @@ namespace Warehouse.Services
                 return (null,"Duplicate Item");
             }
 
-            return await base.edit(id, updated); /// clear
+            var res =  await base.edit(id, updated); /// clear
+
+            if(res.Error is not null)
+            {
+                return (null,res.Error);
+            }
+
+            _eventBus.Publish(new WarehouseEvent
+            {
+                EntityType = "Item",
+                Action = "Edited",
+                Description = $"Edited to: {updated.Name}\n{updated.ReferencePricePerItem}\n{updated.Description}",
+            });
+
+            return res;
         }
         public override async Task<string?> delete(int id)
         {
@@ -88,15 +123,23 @@ namespace Warehouse.Services
                     return "Cannot delete item: There are active Stock Units linked to it.";
                 }
 
-                /// No Stock units left , safe to delete
+                var OldItem = item; /// for even bus
 
+                /// No Stock units left , safe to delete stock data
                 item.Stock.Quantity = 0;
-                item.Stock.IsDeleted = true; /// delete stock data
+                item.Stock.IsDeleted = true; 
                 item.Stock.DeletedAtTime = DateTimeOffset.UtcNow;
                 item.Stock.LastModifiedTime = DateTimeOffset.UtcNow;
 
-                var res = await base.delete(id); /// delete item 
+                var res = await base.delete(id); 
                 if (res is not null) return res;
+
+                _eventBus.Publish(new WarehouseEvent
+                {
+                    EntityType = "Item",
+                    Action = "Deleted",
+                    Description = $"Deleted : {id}\n{OldItem.Name}\n{OldItem.ReferencePricePerItem}\n{OldItem.Description}",
+                });
 
                 return null;
             }

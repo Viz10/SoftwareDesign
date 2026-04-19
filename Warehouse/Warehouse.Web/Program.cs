@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Warehouse.Data.Data.DTOs.AccountDTOs;
 using Warehouse.Data.DbRepository;
 using Warehouse.Services;
+using Warehouse.Services.Services.Events;
+using Warehouse.Services.Services.Exports;
+using Warehouse.Services.Services.Exports.ConcreteStrategies;
 using Warehouse.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +20,14 @@ builder.Services.AddAutoMapper(cfg => {
     cfg.AddMaps(typeof(Program).Assembly);
     cfg.AddMaps(typeof(ItemService).Assembly);
 });
+
+builder.Services.AddTransient<IExportStrategy, ExportCSV>();
+builder.Services.AddTransient<IExportStrategy, ExportJSON>();
+builder.Services.AddTransient<IExportStrategy, ExportXML>();
+builder.Services.AddTransient<Export>();
+
+builder.Services.AddSingleton<WarehouseEventBus>();
+builder.Services.AddSingleton<NotificationService>();
 
 builder.Services.AddTransient<ItemService>();
 builder.Services.AddTransient<StockUnitService>();
@@ -56,5 +67,7 @@ app.MapPost("/auth/logout", async ([FromServices] IdentificationService service)
     await service.logout();
     return Results.Redirect("/Login");
 }).DisableAntiforgery();
+
+app.Services.GetService<NotificationService>();
 
 app.Run();

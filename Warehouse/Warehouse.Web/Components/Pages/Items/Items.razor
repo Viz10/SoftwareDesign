@@ -3,6 +3,7 @@
 
 @using Microsoft.AspNetCore.Authorization
 @using Warehouse.Data.Data.DTOs.ItemDTOs
+@using Warehouse.Services.Services.Exports
 @using Warehouse.Web.Components.Reusable
 @using Warehouse.Services
 @using Warehouse.Web.Models
@@ -18,10 +19,13 @@
 
 <GenericTable Model="@Model" CellNameValuePair="@CellNameValuePair"></GenericTable>
 
+<ExportButtons eventCallback="Export"></ExportButtons>
+
 @code {
     private string? error;
-
     public string? searchByName { get; set; }
+
+    List<ItemGetDTO> Values = new List<ItemGetDTO>();
     public IEnumerable<Dictionary<string, object>> CellNameValuePair { get; set; } = default!;
     public GenericTablePlugIns Model { get; set; } = default!;
 
@@ -42,6 +46,7 @@
             return;
         }
 
+        Values = Value;
         CellNameValuePair = Value.Select(dto => new Dictionary<string, object>
         {
             ["Id"] = dto.Id,
@@ -84,5 +89,14 @@
     {
         searchByName = name;
         await InitCellNameValuePairs();
+    }
+    
+    [Inject] private Export ExportService { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+    
+    private async Task Export(string format)
+    {
+        var content = await ExportService.ExportData(Values, format);
+        await JS.InvokeVoidAsync("downloadFile", $"items.{format}", content);
     }
 }
