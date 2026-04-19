@@ -1,0 +1,88 @@
+﻿@page "/Register"
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using Warehouse.Data.Data.DTOs.AccountDTOs
+@using Warehouse.Web.Components.Reusable
+@using Warehouse.Services
+@using Warehouse.Web.Models
+
+@inject IdentificationService account_service
+@inject NavigationManager Nav
+
+<PageTitle>Register</PageTitle>
+
+<Alert error="@error" succes="@success"></Alert>
+
+<EditForm OnValidSubmit="HandleRegister" Model="registerData">
+    
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="Password">Password</label>
+        <InputText id="Password" @bind-Value="registerData.Password" class="form-control" type="password"></InputText>
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="PasswordConf">Confirm Password</label>
+        <InputText id="PasswordConf" @bind-Value="registerData.ConfirmPassword" class="form-control" type="password"></InputText>
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="Email">Email</label>
+        <InputText id="Email" @bind-Value="registerData.Email" class="form-control"></InputText>
+    </div>
+
+    <AuthorizeView Roles="Admin" Context="adminContext">
+    <div class="form-group">
+        <label for="AccountType">Account Type</label>
+        <InputSelect id="AccountType" @bind-Value="registerData.AccountType" class="form-control">
+            @foreach (var status in Enum.GetValues<Warehouse.Data.Entities.AccountType>())
+            {
+                <option value="@status">@status</option>
+            }
+        </InputSelect>
+    </div>
+    </AuthorizeView>
+    <br/>
+    
+    @if (Loading)
+    {
+        <p>Loading...</p>
+    }
+    else{
+        <button type="submit" class="btn btn-primary">Register</button>
+        <button type="button" class="btn btn-primary" @onclick="Return">Go Back</button>
+    }
+    
+</EditForm>
+
+@code {
+    public bool Loading = false;
+    private string? error = null;
+    private string? success = null;
+    public RegisterDTO registerData = new RegisterDTO { AccountType = Warehouse.Data.Entities.AccountType.Customer };
+
+    public void Return()
+    {
+        Nav.NavigateTo("/");
+    }
+    public async Task HandleRegister()
+    {
+        Loading = true;
+        error = null;
+        success = null;
+        var msg = await account_service.register(registerData);
+
+        if (msg is not null)
+        {
+            error = msg;
+            Loading = false;
+            registerData = new RegisterDTO();
+            return;
+        }
+        Loading = false;
+        registerData = new RegisterDTO();
+        success = "Successfully Registered";
+    }
+}

@@ -1,5 +1,8 @@
 ﻿@page "/Items/Edit/{Id:int}"
 
+@attribute [Authorize(Roles = "Admin, Seller")]
+
+@using Microsoft.AspNetCore.Authorization
 @using Warehouse.Data.Data.DTOs.ItemDTOs
 @using Warehouse.Web.Components.Reusable
 @using Warehouse.Services

@@ -1,4 +1,6 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using Microsoft.AspNetCore.Components.Authorization
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Warehouse.Web</a>
     </div>
@@ -8,17 +10,63 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
+
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Items">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Items
-            </NavLink>
-        </div>
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <span class="nav-link text-light">
+                       @context.User.Identity?.Name
+                    </span>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="Items">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Items
+                    </NavLink>
+                </div>
+
+                <AuthorizeView Roles="Admin" Context="adminContext">
+                   
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="Register">
+                                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Register
+                            </NavLink>
+                        </div>
+                    
+                </AuthorizeView>
+
+                <div class="nav-item px-3">
+                    <form method="post" action="/auth/logout" style="margin:0">
+                        <AntiforgeryToken />
+                        <button type="submit" class="nav-link btn btn-link">
+                            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Logout
+                        </button>
+                    </form>
+                </div>
+
+            </Authorized>
+
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="Login">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Login
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="Register">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Register
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+
+        </AuthorizeView>
+
     </nav>
 </div>
-

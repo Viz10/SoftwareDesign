@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Warehouse.Data.Data.Entities;
 using Warehouse.Data.Entities;
 
 namespace Warehouse.Data.DbRepository
@@ -13,6 +14,12 @@ namespace Warehouse.Data.DbRepository
         public DbSet<StockUnit> StockUnits { get; set; }
         public DbSet<Stock> Stocks { get; set; }
         public DbSet<Account> Accounts { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderLine> OrderLines { get; set; }
+        public DbSet<Receipt> Receipts { get; set; }
+        public DbSet<ReceiptLine> ReceiptLines { get; set; }
+       
+
 
         public WarehouseDbContext(DbContextOptions options) : base(options) { }
 
@@ -44,6 +51,39 @@ namespace Warehouse.Data.DbRepository
             account.HasIndex(a => a.Email).IsUnique().HasFilter("[IsDeleted] = 0");
             account.Property(p => p.LastModifiedTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
             account.Property(p => p.CreatedAt).HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+
+            var order = modelBuilder.Entity<Order>();
+            order.HasIndex(o => new { o.CustomerId, o.Status });
+            order.HasIndex(o => new { o.SellerId, o.Status });
+            order.HasOne(o => o.Customer)
+                 .WithMany()
+                 .HasForeignKey(o => o.CustomerId)
+                 .OnDelete(DeleteBehavior.Restrict);
+            order.HasOne(o => o.Seller)
+                 .WithMany()
+                 .HasForeignKey(o => o.SellerId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+
+            var receipt = modelBuilder.Entity<Receipt>();
+            receipt.Property(p => p.GeneratedAt).HasDefaultValueSql("SYSDATETIMEOFFSET()");
+            receipt.Property(p => p.Subtotal).HasColumnType("decimal(18,2)");
+            receipt.Property(p => p.Tax).HasColumnType("decimal(18,2)");
+            receipt.Property(p => p.Total).HasColumnType("decimal(18,2)");
+            receipt.ToTable(t => t.HasCheckConstraint("pozitive_quantity_Subtotal_NonNegative", "[Subtotal] >= 0"));
+            receipt.ToTable(t => t.HasCheckConstraint("pozitive_quantity_Tax_NonNegative", "[Tax] >= 0"));
+            receipt.ToTable(t => t.HasCheckConstraint("pozitive_quantity_Total_NonNegative", "[Total] >= 0"));
+            receipt.HasIndex(p => p.GeneratedAt);
+            receipt.HasIndex(p => p.BuyerEmail);
+
+
+            var receiptLine = modelBuilder.Entity<ReceiptLine>();
+            receiptLine.Property(p => p.UnitPrice).HasColumnType("decimal(18,2)");
+            receiptLine.Property(p => p.LineTotal).HasColumnType("decimal(18,2)");
+            receiptLine.ToTable(t => t.HasCheckConstraint("pozitive_quantity_Quantity_NonNegative", "[Quantity] >= 0"));
+            receiptLine.ToTable(t => t.HasCheckConstraint("pozitive_quantity_UnitPrice_NonNegative", "[UnitPrice] >= 0"));
+            receiptLine.ToTable(t => t.HasCheckConstraint("pozitive_quantity_LineTotal_NonNegative", "[LineTotal] >= 0"));  
         }
     }
 }

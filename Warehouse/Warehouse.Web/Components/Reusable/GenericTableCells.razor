@@ -1,4 +1,7 @@
-﻿@using Warehouse.Web.Models
+﻿
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using Warehouse.Web.Models
 @inject NavigationManager Nav
 
 
@@ -10,20 +13,24 @@
         {
             <td>@cell[col]</td>
         }
+            <AuthorizeView Roles="Admin">
         <td>
         <button class="btn btn-sm btn-outline-danger" 
                 @onclick='() => Model.OnDeleteCallback.InvokeAsync(currentId)'>
                 Delete
         </button>
         </td>
-
+            </AuthorizeView>
         <td>
+            <AuthorizeView Roles="Admin,Seller">
         <button class="btn btn-sm btn-outline"
                 @onclick='() => Nav.NavigateTo(Model.EditBasePagePath + $"/{currentId}")'>
             Edit
         </button>
+            </AuthorizeView>
         </td>
-
+        
+        <AuthorizeView Roles="Admin,Seller">
         @if (Model.ExtraActions != null)
         {
             @foreach (var action in Model.ExtraActions)
@@ -36,6 +43,7 @@
                 </td>
             }
         }
+        </AuthorizeView>
     </tr>
     }
 

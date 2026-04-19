@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Warehouse.Data.Data.Entities;
 
 namespace Warehouse.Data.Entities
 {
@@ -21,5 +22,7 @@ namespace Warehouse.Data.Entities
         public bool IsDeleted { get; set; } = false;
 
         public UnitStatus Status { get; set; } = UnitStatus.Available;
+
+        public List<OrderLine> OrderLines { get; set; } = new List<OrderLine>();
     }
 }
