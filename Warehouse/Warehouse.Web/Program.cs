@@ -13,8 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
-builder.Services.AddDbContext<WarehouseDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContextFactory<WarehouseDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddAutoMapper(cfg => {
     cfg.AddMaps(typeof(Program).Assembly);
@@ -61,13 +60,12 @@ app.MapPost("/auth/login", async ([FromForm] LoginDTO dto, [FromServices] Identi
     if (error != null) return Results.Redirect($"/Login?error={Uri.EscapeDataString(error)}");
     return Results.Redirect("/Items");
 }).DisableAntiforgery();
-
 app.MapPost("/auth/logout", async ([FromServices] IdentificationService service) =>
 {
     await service.logout();
     return Results.Redirect("/Login");
 }).DisableAntiforgery();
 
-app.Services.GetService<NotificationService>();
+app.Services.GetService<NotificationService>(); /// call manually
 
 app.Run();

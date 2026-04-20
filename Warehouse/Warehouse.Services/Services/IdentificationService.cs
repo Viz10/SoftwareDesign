@@ -23,6 +23,25 @@ namespace Warehouse.Services
             this.httpContextAccessor = httpContextAccessor;
         }
 
+        public async Task<(string?Error,List<string>? Emails)> GetAccountEmails(){
+
+            var claim = httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier);
+              
+            if(claim is null)
+            {
+                return ("Error", null);
+            }
+
+            var emails = await dbContext.AccountEmails.Where(acc => acc.AccountId == int.Parse(claim.Value)).Select(acc => acc.EmailContent).ToListAsync();
+
+            if (!emails.Any())
+            {
+                return ("Empty MailBox", null);
+            }
+
+            return (null, emails);
+        }
+
         public async Task<string?> login(LoginDTO item)
         {
             try

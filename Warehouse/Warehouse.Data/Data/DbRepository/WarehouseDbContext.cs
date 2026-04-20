@@ -18,6 +18,7 @@ namespace Warehouse.Data.DbRepository
         public DbSet<OrderLine> OrderLines { get; set; }
         public DbSet<Receipt> Receipts { get; set; }
         public DbSet<ReceiptLine> ReceiptLines { get; set; }
+        public DbSet<AccountEmail> AccountEmails { get; set; }
        
 
 

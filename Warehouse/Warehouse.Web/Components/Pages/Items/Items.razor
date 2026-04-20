@@ -16,28 +16,40 @@
 <Alert error="@error"></Alert>
 
 <SearchBar PassSearchName="HandleSearchByName" Placeholder="Search by name"></SearchBar>
-
+<div class="form-group">
+    <label for="OrderBy">Order By</label>
+    <InputSelect id="OrderBy" @bind-Value="orderBy" class="form-control">
+        @foreach (var sel in Selectorder)
+        {
+            <option value="@sel">@sel</option>
+        }
+    </InputSelect>
+</div>
+<br />
 <GenericTable Model="@Model" CellNameValuePair="@CellNameValuePair"></GenericTable>
 
 <ExportButtons eventCallback="Export"></ExportButtons>
 
 @code {
+    private List<string> Selectorder = default!;
     private string? error;
     public string? searchByName { get; set; }
+    public string? orderBy { get; set; }
 
-    List<ItemGetDTO> Values = new List<ItemGetDTO>();
+    public List<ItemGetDTO> Values = new List<ItemGetDTO>();
     public IEnumerable<Dictionary<string, object>> CellNameValuePair { get; set; } = default!;
     public GenericTablePlugIns Model { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
+        Selectorder = new List<string> {"ascending", "descending" };
         await InitCellNameValuePairs();
         InitTablePlugins();
     }
 
     public async Task InitCellNameValuePairs()
     {
-        var (Value,Error) = await itemservice.searchItemTypeByPartialName(searchByName);
+        var (Value, Error) = await itemservice.searchItemTypeByPartialName(searchByName, orderBy);
 
         if (Value is null)
         {

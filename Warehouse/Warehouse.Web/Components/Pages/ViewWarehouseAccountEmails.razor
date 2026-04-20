@@ -1,0 +1,49 @@
+﻿@page "/View-Emails"
+
+@using Warehouse.Services
+@using Warehouse.Web.Components.Reusable
+@inject IdentificationService IdService
+
+<h3>Warehouse Account Emails</h3>
+
+<Alert error="@error"></Alert>
+
+@if (emailList == null && error == null)
+{
+    <div class="spinner-border" role="status"></div>
+}
+else
+{
+    <div class="overflow-auto border rounded p-3" style="max-height: 500px;">
+        <div class="list-group">
+            @if (emailList != null )
+            {
+                @foreach (var email in emailList)
+                {
+                    <div class="list-group-item list-group-item-action">
+                        <p class="mb-0" style="white-space: pre-wrap;">@email</p>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private List<string>? emailList { get; set; } = default!;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await IdService.GetAccountEmails();
+
+        if (result.Error is not null)
+        {
+            error = result.Error;
+        }
+        else
+        {
+            emailList = result.Emails;
+        }
+    }
+}
