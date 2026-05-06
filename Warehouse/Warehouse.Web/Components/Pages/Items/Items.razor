@@ -16,6 +16,7 @@
 <Alert error="@error"></Alert>
 
 <SearchBar PassSearchName="HandleSearchByName" Placeholder="Search by name"></SearchBar>
+
 <div class="form-group">
     <label for="OrderBy">Order By</label>
     <InputSelect id="OrderBy" @bind-Value="orderBy" class="form-control">
@@ -26,19 +27,21 @@
     </InputSelect>
 </div>
 <br />
+
 <GenericTable Model="@Model" CellNameValuePair="@CellNameValuePair"></GenericTable>
 
 <ExportButtons eventCallback="Export"></ExportButtons>
 
 @code {
-    private List<string> Selectorder = default!;
+
     private string? error;
     public string? searchByName { get; set; }
     public string? orderBy { get; set; }
-
-    public List<ItemGetDTO> Values = new List<ItemGetDTO>();
+  
     public IEnumerable<Dictionary<string, object>> CellNameValuePair { get; set; } = default!;
     public GenericTablePlugIns Model { get; set; } = default!;
+    private List<string> Selectorder = default!;
+    public List<ItemGetDTO> ExportValues = new List<ItemGetDTO>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -49,17 +52,17 @@
 
     public async Task InitCellNameValuePairs()
     {
-        var (Value, Error) = await itemservice.searchItemTypeByPartialName(searchByName, orderBy);
+        var Result = await itemservice.searchItemTypeByPartialName(searchByName, orderBy);
 
-        if (Value is null)
+        if (!Result.IsSuccessful)
         {
-            error = Error;
+            error = Result.ErrorMsg;
             CellNameValuePair = new List<Dictionary<string, object>>();
             return;
         }
 
-        Values = Value;
-        CellNameValuePair = Value.Select(dto => new Dictionary<string, object>
+        ExportValues = Result.Value;
+        CellNameValuePair = Result.Value.Select(dto => new Dictionary<string, object>
         {
             ["Id"] = dto.Id,
             ["Name"] = dto.Name,
@@ -87,11 +90,11 @@
 
         error = null;
 
-        string? result = await itemservice.delete(id);
+        var Result = await itemservice.delete(id);
 
-        if (result is not null)
+        if (!Result.IsSuccessful)
         {
-            error = result;
+            error = Result.ErrorMsg;
             return;
         }
 
@@ -108,7 +111,7 @@
     
     private async Task Export(string format)
     {
-        var content = await ExportService.ExportData(Values, format);
+        var content = await ExportService.ExportData(ExportValues, format);
         await JS.InvokeVoidAsync("downloadFile", $"items.{format}", content);
     }
 }

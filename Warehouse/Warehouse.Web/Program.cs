@@ -57,9 +57,13 @@ app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 app.MapPost("/auth/login", async ([FromForm] LoginDTO dto, [FromServices] IdentificationService service) =>
 {
     var error = await service.login(dto);
-    if (error != null) return Results.Redirect($"/Login?error={Uri.EscapeDataString(error)}");
+
+    if (error != null)
+    {
+        return Results.Redirect($"/Login?error={Uri.EscapeDataString(error)}");
+    }
     return Results.Redirect("/Items");
-}).DisableAntiforgery();
+});
 app.MapPost("/auth/logout", async ([FromServices] IdentificationService service) =>
 {
     await service.logout();

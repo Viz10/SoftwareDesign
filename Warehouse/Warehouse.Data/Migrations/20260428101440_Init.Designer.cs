@@ -12,8 +12,8 @@ using Warehouse.Data.DbRepository;
 namespace Warehouse.Data.Migrations
 {
     [DbContext(typeof(WarehouseDbContext))]
-    [Migration("20260419173737_OrdersAndReceipts")]
-    partial class OrdersAndReceipts
+    [Migration("20260428101440_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,6 +25,28 @@ namespace Warehouse.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Warehouse.Data.Data.Entities.AccountEmail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EmailContent")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.ToTable("AccountEmails");
+                });
+
             modelBuilder.Entity("Warehouse.Data.Data.Entities.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -33,11 +55,16 @@ namespace Warehouse.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<DateTimeOffset>("CreatedAtTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
                     b.Property<int>("CustomerId")
                         .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("LastModifiedTime")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<int>("SellerId")
                         .HasColumnType("int");
@@ -189,13 +216,10 @@ namespace Warehouse.Data.Migrations
                     b.Property<int>("AccountType")
                         .HasColumnType("int");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
+                    b.Property<DateTimeOffset>("CreatedAtTime")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetimeoffset")
                         .HasDefaultValueSql("SYSDATETIMEOFFSET()");
-
-                    b.Property<DateTimeOffset?>("DeletedAtTime")
-                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -205,10 +229,8 @@ namespace Warehouse.Data.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<DateTimeOffset>("LastModifiedTime")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+                    b.Property<DateTimeOffset?>("LastModifiedTime")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("PasswordHashed")
                         .IsRequired()
@@ -232,8 +254,10 @@ namespace Warehouse.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTimeOffset?>("DeletedAtTime")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<DateTimeOffset>("CreatedAtTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
@@ -241,10 +265,8 @@ namespace Warehouse.Data.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<DateTimeOffset>("LastModifiedTime")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+                    b.Property<DateTimeOffset?>("LastModifiedTime")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -270,11 +292,10 @@ namespace Warehouse.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset?>("DeletedAtTime")
-                        .HasColumnType("datetimeoffset");
+                    b.Property<DateTimeOffset>("CreatedAtTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -282,7 +303,7 @@ namespace Warehouse.Data.Migrations
                     b.Property<int>("ItemId")
                         .HasColumnType("int");
 
-                    b.Property<DateTimeOffset>("LastModifiedTime")
+                    b.Property<DateTimeOffset?>("LastModifiedTime")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<int>("Quantity")
@@ -307,11 +328,13 @@ namespace Warehouse.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTimeOffset>("CreatedAtTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
                     b.Property<decimal?>("CurrentPrice")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTimeOffset?>("DeletedAtTime")
-                        .HasColumnType("datetimeoffset");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -319,10 +342,8 @@ namespace Warehouse.Data.Migrations
                     b.Property<int>("ItemId")
                         .HasColumnType("int");
 
-                    b.Property<DateTimeOffset>("LastModifiedTime")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+                    b.Property<DateTimeOffset?>("LastModifiedTime")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
@@ -343,6 +364,17 @@ namespace Warehouse.Data.Migrations
                         .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("StockUnits");
+                });
+
+            modelBuilder.Entity("Warehouse.Data.Data.Entities.AccountEmail", b =>
+                {
+                    b.HasOne("Warehouse.Data.Entities.Account", "Account")
+                        .WithMany("AccountEmails")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("Warehouse.Data.Data.Entities.Order", b =>
@@ -443,12 +475,16 @@ namespace Warehouse.Data.Migrations
                     b.Navigation("Lines");
                 });
 
+            modelBuilder.Entity("Warehouse.Data.Entities.Account", b =>
+                {
+                    b.Navigation("AccountEmails");
+                });
+
             modelBuilder.Entity("Warehouse.Data.Entities.Item", b =>
                 {
                     b.Navigation("OrderLines");
 
-                    b.Navigation("Stock")
-                        .IsRequired();
+                    b.Navigation("Stock");
 
                     b.Navigation("StockUnits");
                 });

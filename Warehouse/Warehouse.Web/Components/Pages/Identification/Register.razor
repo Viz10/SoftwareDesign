@@ -36,7 +36,7 @@
     <AuthorizeView Roles="Admin" Context="adminContext">
     <div class="form-group">
         <label for="AccountType">Account Type</label>
-        <InputSelect id="AccountType" @bind-Value="registerData.AccountType" class="form-control">
+            <InputSelect id="AccountType" @bind-Value="registerData.AccountType" class="form-control">
             @foreach (var status in Enum.GetValues<Warehouse.Data.Entities.AccountType>())
             {
                 <option value="@status">@status</option>

@@ -1,15 +1,17 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
-using System.Data.Common;
+using Warehouse.Data;
 using Warehouse.Data.DbRepository;
 using Warehouse.Data.Entities;
 
 namespace Warehouse.Services
 {
-    public abstract class GenericService<DataType,GetDTO,SendDTO> : IGenericService<GetDTO, SendDTO>
-    where DataType : class, IEntity 
+    public abstract class GenericService<DataType,GetDTO,SendDTO, UpdateDTO> : IGenericService<GetDTO, SendDTO, UpdateDTO>
+    where DataType : class, ISoftDeletable /// must have Id , implement soft deletable prop and be ref type for accessing DB table
     where GetDTO : class
     where SendDTO : class
+    where UpdateDTO : class
     {
         protected readonly WarehouseDbContext dbContext;
         protected readonly IMapper mapper;
@@ -20,75 +22,82 @@ namespace Warehouse.Services
             this.mapper= mapper;
         }
 
-        public virtual async Task<(GetDTO? Value, string? Error)> findById(int id) 
+        public virtual async Task<Result<GetDTO>> findById(int id) 
         {
             try
             {
-                var item = await dbContext.Set<DataType>().FindAsync(id);
-                if (item == null) return (null,"Not Found");
-                return (mapper.Map<GetDTO>(item),null);
+                var item = await dbContext.Set<DataType>().Where(el=>el.Id==id).ProjectTo<GetDTO>(mapper.ConfigurationProvider).FirstOrDefaultAsync();
+                if (item == null) return Result<GetDTO>.Fail("Not Found");
+                return Result<GetDTO>.Success(item);
             }
             catch (Exception ex)
             {
-                return (null,ex.Message);
+                return Result<GetDTO>.Fail(ex.Message);
             }   
         }
-        public virtual async Task<(IEnumerable<GetDTO>? Value, string? Error)> getAll()
+        public virtual async Task<Result<IEnumerable<GetDTO>>> getAll()
         {
             try
             {
-                var elements = await dbContext.Set<DataType>().ToListAsync();
-                if(elements == null) return (null,"Not found");
-                return (mapper.Map<IEnumerable<GetDTO>>(elements), null);
+                var elements = await dbContext.Set<DataType>().ProjectTo<GetDTO>(mapper.ConfigurationProvider).ToListAsync();
+                if(elements == null) return Result<IEnumerable<GetDTO>>.Fail("Not Found");
+                return Result<IEnumerable<GetDTO>>.Success(elements);
             }
             catch (Exception ex)
             {
-                return (null, ex.Message);
+                return Result<IEnumerable<GetDTO>>.Fail(ex.Message);
             }
         }
-        public virtual async Task<string?> add(SendDTO item)
+        public virtual async Task<Result<GetDTO>> add(SendDTO item)
         {
             try /// children class must ensure not duplicate
             {
                 var toBeAdded = mapper.Map<DataType>(item);
                 await dbContext.Set<DataType>().AddAsync(toBeAdded);
                 await dbContext.SaveChangesAsync();
-                return null;
+                return Result<GetDTO>.Success(null);
             }
             catch (DbUpdateException ex)
             {
-                return ex.Message;
+                return Result<GetDTO>.Fail(ex.Message);
             }
             catch (Exception ex)
             {
-                return ex.Message;
+                return Result<GetDTO>.Fail(ex.Message);
             }
         }
-        public virtual async Task<(GetDTO? Value, string? Error)> edit(int id, SendDTO updated)
+        public virtual async Task<Result<GetDTO>> edit(int id, UpdateDTO updated)
         {
-            try /// children class must ensure if it can be duplicate
+            try
             {
                 var Old = await dbContext.Set<DataType>().FirstOrDefaultAsync(x => x.Id == id);
 
                 if (Old == null)
                 {
-                    return (null,"Not found");
+                    return Result<GetDTO>.Fail("Not Found");
                 }
+
                 mapper.Map(updated, Old);
                 Old.LastModifiedTime = DateTimeOffset.UtcNow;
                 await dbContext.SaveChangesAsync();
-                return (mapper.Map<GetDTO>(Old), null);
+
+                var result = await dbContext.Set<DataType>()
+                    .Where(x => x.Id == id)
+                    .ProjectTo<GetDTO>(mapper.ConfigurationProvider)
+                    .FirstOrDefaultAsync();
+
+                return Result<GetDTO>.Success(result);
             }
             catch (DbUpdateException ex)
             {
-                return (null, ex.Message);
+                return Result<GetDTO>.Fail(ex.Message);
             }
             catch (Exception ex)
             {
-                return (null, ex.Message);
+                return Result<GetDTO>.Fail(ex.Message);
             }
         }
-        public virtual async Task<string?> delete(int id)
+        public virtual async Task<Result<bool>> delete(int id)
         {
             try
             {
@@ -96,34 +105,20 @@ namespace Warehouse.Services
                 
                 if (item == null)
                 {
-                    return "Not present!";
+                    return Result<bool>.Fail("Not Present");
                 }
 
                 item.IsDeleted = true;
-                item.DeletedAtTime = DateTimeOffset.UtcNow;
                 item.LastModifiedTime = DateTimeOffset.UtcNow;
 
                 await dbContext.SaveChangesAsync();
-                return null;
+                return Result<bool>.Success(true);
 
             }
             catch (Exception ex)
             {
-                return ex.Message;
+                return Result<bool>.Fail(ex.Message);
             }
-        }
-        public virtual async Task<string?> restore(int id)
-        {
-            var item = await dbContext.Set<DataType>().IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
-
-            if (item == null) return "Not found";
-
-            item.IsDeleted = false;
-            item.DeletedAtTime = null;
-            item.LastModifiedTime = DateTimeOffset.UtcNow;
-
-            await dbContext.SaveChangesAsync();
-            return null;
         }
     }
 }

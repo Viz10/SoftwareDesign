@@ -7,6 +7,7 @@
 @using Warehouse.Web.Components.Reusable
 @using Warehouse.Services
 @using Warehouse.Web.Models
+@using Warehouse.Data
 
 @inject StockUnitService service
 @inject NavigationManager Nav
@@ -24,32 +25,35 @@
 
 <ExportButtons eventCallback="Export"></ExportButtons>
 
+
 @code {
+    [Inject] private Export ExportService { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
     [Parameter] public int ItemId { get; set; }
+    
     private string? _error;
     private string? _name { get; set; }
-
     public string? searchByBarcode { get; set; }
 
-    List<StockUnitGetDTO> Values = new List<StockUnitGetDTO>();
+    List<StockUnitGetDTO> ExportValues = new List<StockUnitGetDTO>();
     public IEnumerable<Dictionary<string, object>> CellNameValuePair { get; set; } = default!;
     public GenericTablePlugIns Model { get; set; } = default!;
 
     protected override async Task OnParametersSetAsync()
     {
-        var (Value,Msg) = await service.GetItemName(ItemId);
+        var Result = await service.GetItemName(ItemId);
 
-        if (Value is null){
-            _error = Msg;
+        if (!Result.IsSuccessful){
+            _error = Result.ErrorMsg;
             return;
         }
-        Debug.Print(Value);
-        _name = Value;
+        _name = Result.Value;
     }
     protected override async Task OnInitializedAsync()
     {
         await InitCellsById();
-        InitTablePlugins();
+        InitTablePlugins(); /// just once , data will change only not plugins
     }
 
     public async Task InitCellsById()
@@ -75,17 +79,17 @@
             ExtraActions = new List<(string ButtonLabel, EventCallback<int> Action)> { ("Ship to customer", EventCallback.Factory.Create<int>(this, (id) => Nav.NavigateTo($"/Shipping/{id}"))) }
         };
     }
-    public void InitList((List<StockUnitGetDTO>? Value, string? Error) pair)
+    public void InitList(Result<List<StockUnitGetDTO>> Result)
     {
-        if (pair.Value is null)
+        if (!Result.IsSuccessful)
         {
-            _error = pair.Error;
+            _error = Result.ErrorMsg;
             CellNameValuePair = new List<Dictionary<string, object>>();
             return;
         }
 
-        Values = pair.Value;
-        CellNameValuePair = pair.Value.Select(dto => new Dictionary<string, object>
+        ExportValues = Result.Value;
+        CellNameValuePair = Result.Value.Select(dto => new Dictionary<string, object>
         {
             ["Id"] = dto.Id,
             ["Name"] = dto.Name,
@@ -100,11 +104,11 @@
     {
         _error = null;
 
-        string? result = await service.delete(id);
+        var result = await service.delete(id);
 
-        if (result is not null)
+        if (!result.Value)
         {
-            _error = result;
+            _error = result.ErrorMsg;
             return;
         }
 
@@ -116,12 +120,10 @@
         await InitCellsByBarcode();
     }
     
-    [Inject] private Export ExportService { get; set; } = default!;
-    [Inject] private IJSRuntime JS { get; set; } = default!;
  
     private async Task Export(string format)
     {
-        var content = await ExportService.ExportData(Values, format);
+        var content = await ExportService.ExportData(ExportValues, format);
         await JS.InvokeVoidAsync("downloadFile", $"stockunits.{format}", content);
     }
 }

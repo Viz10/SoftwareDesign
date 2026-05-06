@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Warehouse.Data.Data.DTOs.ItemDTOs;
 using Warehouse.Data.Data.DTOs.StockUnitDTOs;
 using Warehouse.Data.Entities;
 
@@ -13,6 +12,7 @@ namespace Warehouse.Mappings
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Item.Name));
             
             CreateMap<StockUnitUpdateDTO, StockUnit>();
+            CreateMap<StockUnitSendDTO, StockUnit>();
             CreateMap<StockUnitGetDTO, StockUnitUpdateDTO>();
         }
     }

@@ -33,16 +33,26 @@
     </div>
     <br />
 
-    <button type="submit" class="btn btn-primary">Submit</button>
-    <button type="button" class="btn btn-primary" @onclick="Return">Go Back</button>
+    @if (Loading)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="button" class="btn btn-primary" @onclick="Return">Go Back</button>
+    }
 
 </EditForm>
 
 @code {
     [Parameter] public int ItemId { get; set; }
+    public StockUnitSendDTO NewItem = new StockUnitSendDTO();
+    
     private string? error = null;
     private string? success = null;
-    public StockUnitSendDTO NewItem = new StockUnitSendDTO();
+    public bool Loading = false;
+    
 
     public void Return()
     {
@@ -50,19 +60,22 @@
     }
     public async Task Add()
     {
+        Loading = true;
         error = null;
         success = null;
 
         NewItem.ItemId = ItemId;
-        var msg = await stock_unit_service.add(NewItem);
+        var Result = await stock_unit_service.add(NewItem);
 
-        if (msg is not null)
+        if (!Result.IsSuccessful)
         {
-            error = msg;
+            error = Result.ErrorMsg;
             NewItem = new StockUnitSendDTO();
-            return;
+            Loading = false;
+            return; 
         }
         NewItem = new StockUnitSendDTO();
         success = "Successfully added new item!";
+        Loading = false;
     }
 }

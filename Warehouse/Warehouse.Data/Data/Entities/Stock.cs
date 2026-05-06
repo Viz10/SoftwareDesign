@@ -2,7 +2,7 @@
 
 namespace Warehouse.Data.Entities
 {
-    public class Stock : IEntity /// quantity table for a specific item
+    public class Stock : ISoftDeletable /// quantity table for a specific item
     {
         [Key]
         public int Id { get; set; }
@@ -12,9 +12,8 @@ namespace Warehouse.Data.Entities
 
         public int Quantity { get; set; } = 0;
 
-        public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset LastModifiedTime { get; set; }
-        public DateTimeOffset? DeletedAtTime { get; set; }
+        public DateTimeOffset CreatedAtTime { get; set; }
+        public DateTimeOffset? LastModifiedTime { get; set; }
         public bool IsDeleted { get; set; } = false;
     }
 }

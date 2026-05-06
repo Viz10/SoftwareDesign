@@ -35,14 +35,22 @@
     </div>
     <br />
 
-    <button type="submit" class="btn btn-primary">Submit</button>
-    <button type="button" class="btn btn-primary" @onclick="Return">Go Back</button>
+    @if (Loading)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="button" class="btn btn-primary" @onclick="Return">Go Back</button>
+    }
 
 </EditForm>
 
 
 
 @code {
+    public bool Loading = false;
     private string? error=null;
     private string? success=null;
     public ItemSendDTO NewItem = new ItemSendDTO();
@@ -53,17 +61,20 @@
     }
     public async Task Add()
     {
+        Loading = true;
         error = null;
         success = null;
-        var msg = await itemservice.add(NewItem);
+        var Result = await itemservice.add(NewItem);
 
-        if (msg is not null)
+        if (!Result.IsSuccessful)
         {
-            error = msg;
+            error = Result.ErrorMsg;
             NewItem = new ItemSendDTO();
+            Loading = false;
             return;
         }
         NewItem = new ItemSendDTO();
         success = "Successfully added new item!";
+        Loading = false;
     }
 }

@@ -10,11 +10,12 @@ namespace Warehouse.Mappings
         {
             CreateMap<Item, ItemGetDTO>()
             .ForMember(dest => dest.Quantity,
-             opt => opt.MapFrom(src => src.Stock.Quantity));
-            /// the rest of matching members just copy
+                 opt => opt.MapFrom(src => src.Stock != null ? src.Stock.Quantity : 0)); 
+                 /// Ensures that if Stock is null, Quantity defaults to 0
 
-            CreateMap<ItemSendDTO, Item>();         
-            CreateMap<ItemGetDTO, ItemSendDTO>();         
+            CreateMap<ItemSendDTO, Item>();  /// service mapping       
+            CreateMap<ItemUpdateDTO, Item>();   /// service mapping       
+            CreateMap<ItemGetDTO, ItemUpdateDTO>(); /// refresh edit form        
         }
     }
 }

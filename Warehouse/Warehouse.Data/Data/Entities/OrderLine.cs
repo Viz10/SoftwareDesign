@@ -11,15 +11,18 @@ namespace Warehouse.Data.Data.Entities
         [Key]
         public int Id { get; set; }
 
+
         public int OrderId { get; set; }
         public Order Order { get; set; } = null!;
+
 
         public int ItemId { get; set; }
         public Item Item { get; set; } = null!;
 
+
         public int? StockUnitId { get; set; }
         public StockUnit? StockUnit { get; set; } /// might assign later which specific one
 
-        public DateTimeOffset? ShippedAt { get; set; } /// an stock item from the order can be shupped later
+        public DateTimeOffset? ShippedAt { get; set; } /// a stock item from the order can be shipped later
     }
 }

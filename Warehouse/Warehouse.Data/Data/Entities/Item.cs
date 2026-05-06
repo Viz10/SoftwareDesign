@@ -4,7 +4,7 @@ using Warehouse.Data.Data.Entities;
 
 namespace Warehouse.Data.Entities
 {
-    public class Item : IEntity
+    public class Item : ISoftDeletable
     {
         [Key]
         public int Id { get; set; }
@@ -13,12 +13,12 @@ namespace Warehouse.Data.Entities
         public decimal? ReferencePricePerItem { get; set; } 
         public string? Description { get; set; }
         
-        public DateTimeOffset? DeletedAtTime {  get; set; }
-        public DateTimeOffset LastModifiedTime { get; set; }
+        public DateTimeOffset CreatedAtTime {  get; set; }
+        public DateTimeOffset? LastModifiedTime { get; set; }
         public bool IsDeleted { get; set; } = false;
 
 
-        public Stock Stock { get; set; } = new Stock();
+        public Stock? Stock { get; set; }
         public List<StockUnit> StockUnits { get; set; } = new List<StockUnit>();
         public List<OrderLine> OrderLines { get; set; } = new List<OrderLine>();   
     }

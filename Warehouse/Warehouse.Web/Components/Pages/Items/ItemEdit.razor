@@ -38,46 +38,59 @@
     </div>
     <br />
 
-    <button type="submit" class="btn btn-primary">Submit</button>
-    <button type="button" class="btn btn-primary" @onclick="Return">Go Back</button>
+    @if (Loading)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="button" class="btn btn-primary" @onclick="Return">Go Back</button>
+    }
 
 </EditForm>
 
 
-
 @code {
     [Parameter] public int Id { get; set; }
-    public ItemSendDTO NewItem = new ItemSendDTO();
+    public ItemUpdateDTO NewItem = new ItemUpdateDTO();
+    public bool Loading = false;
     private string? error = null;
     private string? succes = null;
 
     protected override async Task OnParametersSetAsync()
     {
+        Loading = true;
         error = null;
         succes = null;
 
-        var(Value,msg) = await itemservice.findById(Id); /// fetch old data
+        var Result = await itemservice.findById(Id); /// fetch old data
 
-        if(Value is null)
+        if (!Result.IsSuccessful)
         {
-            error = msg;
+            error = Result.ErrorMsg;
+            Loading = false;
             return;
         }
-        mapper.Map(Value, NewItem);
+        mapper.Map(Result.Value, NewItem);
+        Loading = false;
     }
     public async Task Edit()
     {
+        Loading = true;
         error = null;
         succes = null;
-        var (Value, msg) = await itemservice.edit(Id, NewItem);
+        var Result = await itemservice.edit(Id, NewItem);
 
-        if (Value is null)
+        if (!Result.IsSuccessful)
         {
-            error = msg;
+            error = Result.ErrorMsg;
+            Loading = false;
             return;
         }
-        mapper.Map(Value, NewItem); /// refresh with new data
+        mapper.Map(Result.Value, NewItem); /// refresh with new data
         succes = "Successfully updated item!";
+        Loading = false;
     }
     public void Return()
     {

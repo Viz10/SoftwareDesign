@@ -31,30 +31,31 @@ namespace Warehouse.Data.DbRepository
             var item = modelBuilder.Entity<Item>();
             item.HasQueryFilter(u => !u.IsDeleted);
             item.HasIndex(x => x.Name).IsUnique().HasFilter("[IsDeleted] = 0");
-            item.Property(p => p.LastModifiedTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
+            item.Property(p => p.CreatedAtTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
             item.Property(p => p.ReferencePricePerItem).HasColumnType("decimal(18,2)");
             
 
             var stockUnit = modelBuilder.Entity<StockUnit>();
             stockUnit.HasQueryFilter(u => !u.IsDeleted && !u.Item.IsDeleted);
             stockUnit.HasIndex(x => x.SerialNumber).IsUnique().HasFilter("[IsDeleted] = 0");
-            stockUnit.Property(p => p.LastModifiedTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
+            stockUnit.Property(p => p.CreatedAtTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
             stockUnit.Property(p => p.CurrentPrice).HasColumnType("decimal(18,2)");
 
 
             var stock = modelBuilder.Entity<Stock>();
             stock.HasQueryFilter(s => !s.IsDeleted && !s.Item.IsDeleted);
             stock.ToTable(t => t.HasCheckConstraint("pozitive_quantity_constraint","[Quantity] >= 0"));
+            stock.Property(p => p.CreatedAtTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
 
             var account = modelBuilder.Entity<Account>();
             account.HasQueryFilter(a => !a.IsDeleted); /// when querying , skip deleted rows
             account.HasIndex(a => a.Email).IsUnique().HasFilter("[IsDeleted] = 0");
-            account.Property(p => p.LastModifiedTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
-            account.Property(p => p.CreatedAt).HasDefaultValueSql("SYSDATETIMEOFFSET()");
+            account.Property(p => p.CreatedAtTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
 
             var order = modelBuilder.Entity<Order>();
+            order.Property(p => p.CreatedAtTime).HasDefaultValueSql("SYSDATETIMEOFFSET()");
             order.HasIndex(o => new { o.CustomerId, o.Status });
             order.HasIndex(o => new { o.SellerId, o.Status });
             order.HasOne(o => o.Customer)
