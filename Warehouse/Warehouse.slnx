@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="InventoryService/InventoryService.csproj" />
+  <Project Path="Warehouse.Client/Warehouse.Client.csproj" />
+  <Project Path="Warehouse.Shared/Warehouse.Shared.csproj" />
+  <Project Path="Warehouse/Warehouse.csproj" />
+</Solution>
