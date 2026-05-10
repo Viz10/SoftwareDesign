@@ -1,6 +1,7 @@
 <Solution>
+  <Project Path="AccountService/AccountService.csproj" Id="2a5d0038-85d5-4519-b05b-a3782fcfb67e" />
   <Project Path="InventoryService/InventoryService.csproj" />
-  <Project Path="Warehouse.Client/Warehouse.Client.csproj" />
+  <Project Path="Warehouse.Client/Warehouse.Client.csproj" Id="4f735be5-8e61-4437-9d7e-21940141a660" />
+  <Project Path="Warehouse.Shared.Auth/Warehouse.Shared.Auth.csproj" Id="8b488c3d-871e-439d-9caf-8e27566adbf4" />
   <Project Path="Warehouse.Shared/Warehouse.Shared.csproj" />
-  <Project Path="Warehouse/Warehouse.csproj" />
 </Solution>

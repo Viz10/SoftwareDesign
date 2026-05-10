@@ -7,14 +7,14 @@ namespace InventoryService.Application.Mappings
     {
         public ItemMappingProfile()
         {
-            CreateMap<Item, ItemGetDTO>()
-            .ForMember(dest => dest.Quantity,
-                 opt => opt.MapFrom(src => src.Stock != null ? src.Stock.Quantity : 0));
+            //CreateMap<Item, ItemGetDTO>()
+           // .ForMember(dest => dest.Quantity,
+               //  opt => opt.MapFrom(src => src.Stock != null ? src.Stock.Quantity : 0));
             /// Ensures that if Stock is null, Quantity defaults to 0
 
-            CreateMap<ItemSendDTO, Item>();  /// service mapping       
-            CreateMap<ItemUpdateDTO, Item>();   /// service mapping       
-            CreateMap<ItemGetDTO, ItemUpdateDTO>(); /// refresh edit form        
+            //CreateMap<ItemSendDTO, Item>();  /// service mapping       
+            //CreateMap<ItemUpdateDTO, Item>();   /// service mapping       
+            //CreateMap<ItemGetDTO, ItemUpdateDTO>(); /// refresh edit form        
         }
     }
 

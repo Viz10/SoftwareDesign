@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Warehouse.Shared.Common;
 
 namespace InventoryService.Infrastructure.Entities
 {

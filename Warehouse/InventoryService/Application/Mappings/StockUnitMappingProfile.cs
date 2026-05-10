@@ -7,12 +7,12 @@ namespace InventoryService.Application.Mappings
     {
         public StockUnitMappingProfile()
         {
-            CreateMap<StockUnit, StockUnitGetDTO>()
-            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Item.Name));
+            //CreateMap<StockUnit, StockUnitGetDTO>()
+           // .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Item.Name));
 
-            CreateMap<StockUnitUpdateDTO, StockUnit>();
-            CreateMap<StockUnitSendDTO, StockUnit>();
-            CreateMap<StockUnitGetDTO, StockUnitUpdateDTO>();
+           // CreateMap<StockUnitUpdateDTO, StockUnit>();
+           // CreateMap<StockUnitSendDTO, StockUnit>();
+           // CreateMap<StockUnitGetDTO, StockUnitUpdateDTO>();
         }
     }
 
