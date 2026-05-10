@@ -3,7 +3,7 @@ using InventoryService.Application.Commands;
 
 namespace InventoryService.Application.Validations
 {
-    internal class UpdateItemCommandValidator : AbstractValidator<AddItemCommand>
+    internal class UpdateItemCommandValidator : AbstractValidator<UpdateItemCommand>
     {
         public UpdateItemCommandValidator()
         {

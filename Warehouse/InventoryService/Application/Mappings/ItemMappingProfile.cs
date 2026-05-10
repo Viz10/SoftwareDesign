@@ -18,7 +18,7 @@ namespace InventoryService.Application.Mappings
 
             CreateMap<AddItemCommand, Item>();  /// service mapping       
             CreateMap<UpdateItemCommand, Item>();   /// service mapping       
-            CreateMap<ItemGetResponse, AddItemRequest>(); /// refresh edit form        
+            CreateMap<ItemGetResponse, UpdateItemRequest>(); /// refresh edit form        
         }
     }
 
