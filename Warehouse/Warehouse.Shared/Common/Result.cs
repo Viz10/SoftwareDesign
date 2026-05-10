@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FluentValidation.Results;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -8,19 +9,20 @@ namespace Warehouse.Shared.Common
     public interface IResult
     {
         bool IsSuccessful { get; }
-        List<string>? Errors { get; }
-        public string? ErrorMsg { get; }
+        public Dictionary<string, List<string>>? FieldErrors { get; } /// API related
+        public string? ErrorMsg { get; } /// system related
         object? GetErrors();
     }
 
     public class Result : IResult /// dont return anything
     {
+
         public bool IsSuccessful { get; protected set; }
-        public List<string>? Errors { get; protected set; }
+        public Dictionary<string, List<string>>? FieldErrors { get; protected set; }
         public string? ErrorMsg { get; protected set; }
 
 
-        public object? GetErrors() => (Errors is not null && Errors.Count > 0) ? Errors : ErrorMsg;
+        public object? GetErrors() => (FieldErrors is not null && FieldErrors.Count > 0) ? FieldErrors : ErrorMsg;
 
 
         public static Result Success()
@@ -38,13 +40,16 @@ namespace Warehouse.Shared.Common
                 ErrorMsg = errorMsg
             };
         }
-        public static Result MultipleFails(List<string> errors)
+        public static Result MultipleFails(List<ValidationFailure> failures)
         {
-            return new Result()
-            {
-                IsSuccessful = false,
-                Errors = errors
-            };
+            var fieldErrors = failures
+            .GroupBy(f => f.PropertyName)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(f => f.ErrorMessage).ToList()
+            );
+
+            return new Result { IsSuccessful = false, FieldErrors = fieldErrors };
         }
     }
             
@@ -68,13 +73,16 @@ namespace Warehouse.Shared.Common
                 ErrorMsg = errorMsg 
             };
         }
-        public static new Result<T> MultipleFails(List<string> errors)
+        public new static Result<T> MultipleFails(List<ValidationFailure> failures)
         {
-            return new Result<T>()
-            {
-                IsSuccessful = false,
-                Errors = errors
-            };
+            var fieldErrors = failures
+            .GroupBy(f => f.PropertyName)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(f => f.ErrorMessage).ToList()
+            );
+
+            return new Result<T> { IsSuccessful = false, FieldErrors = fieldErrors };
         }
     }
 }

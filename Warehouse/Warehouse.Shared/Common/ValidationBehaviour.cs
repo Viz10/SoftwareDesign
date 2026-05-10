@@ -18,6 +18,7 @@ namespace Warehouse.Shared.Common
 
         public async Task<TResponse> Handle(TRequest request,RequestHandlerDelegate<TResponse> next,CancellationToken cancellationToken)
         {
+
             if (!_validators.Any()) return await next(); /// no validators for this command , return handler result
 
             var context = new ValidationContext<TRequest>(request);
@@ -29,11 +30,9 @@ namespace Warehouse.Shared.Common
 
             if (!failures.Any()) return await next(); /// ok data
 
-            var errors = failures.Select(e => e.ErrorMessage).ToList();
-
             var fail = typeof(TResponse)
                 .GetMethod("MultipleFails", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)!
-                .Invoke(null, new object[] { errors })!;
+                .Invoke(null, new object[] { failures })!;
 
             return (TResponse)fail; /// Result or Result<T> with multiple errors
         }

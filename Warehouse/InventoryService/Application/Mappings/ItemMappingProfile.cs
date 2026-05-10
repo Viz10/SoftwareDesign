@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using InventoryService.Application.Commands;
 using InventoryService.Infrastructure.Entities;
+using Warehouse.Shared.DTOs.ItemDTO;
 
 namespace InventoryService.Application.Mappings
 {
@@ -7,14 +9,16 @@ namespace InventoryService.Application.Mappings
     {
         public ItemMappingProfile()
         {
-            //CreateMap<Item, ItemGetDTO>()
-           // .ForMember(dest => dest.Quantity,
-               //  opt => opt.MapFrom(src => src.Stock != null ? src.Stock.Quantity : 0));
+            CreateMap<Item, ItemGetResponse>()
+            .ForMember(dest => dest.Quantity,  opt => opt.MapFrom(src => src.Stock != null ? src.Stock.Quantity : 0));
             /// Ensures that if Stock is null, Quantity defaults to 0
 
-            //CreateMap<ItemSendDTO, Item>();  /// service mapping       
-            //CreateMap<ItemUpdateDTO, Item>();   /// service mapping       
-            //CreateMap<ItemGetDTO, ItemUpdateDTO>(); /// refresh edit form        
+            CreateMap<AddItemRequest, AddItemCommand>();
+            CreateMap<UpdateItemRequest, UpdateItemCommand>(); /// api conversions
+
+            CreateMap<AddItemCommand, Item>();  /// service mapping       
+            CreateMap<UpdateItemCommand, Item>();   /// service mapping       
+            CreateMap<ItemGetResponse, AddItemRequest>(); /// refresh edit form        
         }
     }
 

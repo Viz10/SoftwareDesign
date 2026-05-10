@@ -1,6 +1,32 @@
+using InventoryService.Application.Mappings;
+using InventoryService.Infrastructure.DbRepository;
+using FluentValidation;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
+using System.Reflection;
+using Warehouse.Shared.Common;
+using Warehouse.Shared.Auth;
+using InventoryService.Application;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add services to the container
+
+builder.Services.AddDbContext<InventoryServiceDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+
+builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly(), includeInternalTypes: true);
+builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
+
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(typeof(ItemMappingProfile).Assembly);
+    cfg.AddMaps(typeof(StockUnitMappingProfile).Assembly);
+});
+
+builder.Services.AddSharedJwtAuth(builder.Configuration);
+builder.Services.AddScoped<ItemDomainService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -12,9 +38,12 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
