@@ -1,0 +1,81 @@
+﻿@page "/StockUnits/Add/{ItemId:int}"
+
+@using Warehouse.Data.Data.DTOs.StockUnitDTOs
+@using Warehouse.Web.Components.Reusable
+@using Warehouse.Services
+@using Warehouse.Web.Models
+
+@inject StockUnitService stock_unit_service
+@inject NavigationManager Nav
+
+<PageTitle>Add Stock Unit</PageTitle>
+
+<Alert error="@error" succes="@success"></Alert>
+
+<EditForm OnValidSubmit="Add" Model="NewItem">
+    
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="CurrentPrice">Current Price</label>
+        <InputNumber id="CurrentPrice" step="0.1" @bind-Value="NewItem.CurrentPrice" class="form-control"></InputNumber>
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="Quantity">Quantity</label>
+        <InputNumber id="Quantity" @bind-Value="NewItem.Quantity" class="form-control"></InputNumber>
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="Note">Note</label>
+        <InputTextArea id="Note" @bind-Value="NewItem.Note" class="form-control"></InputTextArea>
+    </div>
+    <br />
+
+    @if (Loading)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="button" class="btn btn-primary" @onclick="Return">Go Back</button>
+    }
+
+</EditForm>
+
+@code {
+    [Parameter] public int ItemId { get; set; }
+    public StockUnitSendDTO NewItem = new StockUnitSendDTO();
+    
+    private string? error = null;
+    private string? success = null;
+    public bool Loading = false;
+    
+
+    public void Return()
+    {
+        Nav.NavigateTo($"/StockUnits/{ItemId}");
+    }
+    public async Task Add()
+    {
+        Loading = true;
+        error = null;
+        success = null;
+
+        NewItem.ItemId = ItemId;
+        var Result = await stock_unit_service.add(NewItem);
+
+        if (!Result.IsSuccessful)
+        {
+            error = Result.ErrorMsg;
+            NewItem = new StockUnitSendDTO();
+            Loading = false;
+            return; 
+        }
+        NewItem = new StockUnitSendDTO();
+        success = "Successfully added new item!";
+        Loading = false;
+    }
+}

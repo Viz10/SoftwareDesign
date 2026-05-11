@@ -28,6 +28,11 @@ builder.Services.AddAutoMapper(cfg =>
 builder.Services.AddSharedJwtAuth(builder.Configuration);
 builder.Services.AddScoped<ItemDomainService>();
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<CurrentUser>();
+
+builder.Services.AddHttpClient("NotificationService",c => c.BaseAddress = new Uri("https://localhost:7193"));
+
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

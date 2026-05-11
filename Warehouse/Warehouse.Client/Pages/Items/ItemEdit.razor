@@ -1,0 +1,100 @@
+﻿@page "/Items/Edit/{Id:int}"
+
+@attribute [Authorize(Roles = "Admin, Seller")]
+
+@using Microsoft.AspNetCore.Authorization
+@using Warehouse.Data.Data.DTOs.ItemDTOs
+@using Warehouse.Web.Components.Reusable
+@using Warehouse.Services
+@using Warehouse.Web.Models
+@using AutoMapper;
+
+@inject ItemService itemservice
+@inject NavigationManager Nav
+@inject IMapper mapper
+
+<PageTitle>Edit Item</PageTitle>
+
+<Alert error="@error" succes="@succes"></Alert>
+
+<EditForm OnValidSubmit="Edit" Model="NewItem">
+    
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="Name">Name</label>
+        <InputText id="Name" @bind-Value="NewItem.Name" class="form-control"></InputText>
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="PricePerItem">Price Per Item</label>
+        <InputNumber id="PricePerItem" step="0.1" @bind-Value="NewItem.ReferencePricePerItem" class="form-control"></InputNumber>
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="Description">Description</label>
+        <InputTextArea id="Description" @bind-Value="NewItem.Description" class="form-control"></InputTextArea>
+    </div>
+    <br />
+
+    @if (Loading)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="button" class="btn btn-primary" @onclick="Return">Go Back</button>
+    }
+
+</EditForm>
+
+
+@code {
+    [Parameter] public int Id { get; set; }
+    public ItemUpdateDTO NewItem = new ItemUpdateDTO();
+    public bool Loading = false;
+    private string? error = null;
+    private string? succes = null;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Loading = true;
+        error = null;
+        succes = null;
+
+        var Result = await itemservice.findById(Id); /// fetch old data
+
+        if (!Result.IsSuccessful)
+        {
+            error = Result.ErrorMsg;
+            Loading = false;
+            return;
+        }
+        mapper.Map(Result.Value, NewItem);
+        Loading = false;
+    }
+    public async Task Edit()
+    {
+        Loading = true;
+        error = null;
+        succes = null;
+        var Result = await itemservice.edit(Id, NewItem);
+
+        if (!Result.IsSuccessful)
+        {
+            error = Result.ErrorMsg;
+            Loading = false;
+            return;
+        }
+        mapper.Map(Result.Value, NewItem); /// refresh with new data
+        succes = "Successfully updated item!";
+        Loading = false;
+    }
+    public void Return()
+    {
+        Nav.NavigateTo("/Items");
+    }
+}
+

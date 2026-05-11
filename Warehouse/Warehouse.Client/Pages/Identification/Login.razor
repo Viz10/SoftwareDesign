@@ -1,0 +1,116 @@
+﻿@page "/Login"
+@using Warehouse.Client.Auth
+@using Warehouse.Client.Reusable
+@using Warehouse.Shared.DTOs.AccountDTO
+@using Warehouse.Shared.Common
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject IHttpClientFactory HttpFactory
+@inject NavigationManager Nav
+@inject JwtAuthStateProvider AuthProvider
+
+<PageTitle>Login</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <h3 class="mb-4 text-center">Login</h3>
+
+            @* Global Errors *@
+            @if (!string.IsNullOrEmpty(errorMsg))
+            {
+                <div class="alert alert-danger">@errorMsg</div>
+            }
+
+            @* Centralized Field Errors *@
+            @if (fieldErrors.Any())
+            {
+                <DictionaryErrors Errors="fieldErrors" />
+            }
+
+            <EditForm Model="command" OnSubmit="HandleLogin">
+                <div class="form-group mb-3">
+                    <label for="Email">Email</label>
+                    <InputText id="Email" 
+                               type="email" 
+                               class="form-control" 
+                               @bind-Value="command.Email" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="Password">Password</label>
+                    <InputText id="Password" 
+                               type="password" 
+                               class="form-control" 
+                               @bind-Value="command.Password" />
+                </div>
+
+                <hr />
+
+                <button type="submit" class="btn btn-primary w-100" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" />
+                    }
+                    Login
+                </button>
+
+                <button type="button" class="btn btn-outline-secondary w-100 mt-2"
+                        @onclick='() => Nav.NavigateTo("/")'>
+                    Go Back
+                </button>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginRequest command = new();
+    private Dictionary<string, List<string>> fieldErrors = new();
+    private string? errorMsg;
+    private bool isLoading = false;
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        errorMsg = null;
+        fieldErrors = new();
+
+        try
+        {
+            var client = HttpFactory.CreateClient("AccountService");
+            var response = await client.PostAsJsonAsync("api/account/login", command);
+            var result = await response.Content.ReadFromJsonAsync<Result<string>>();
+
+            if (result is null)
+            {
+                errorMsg = "Unexpected error, please try again.";
+                return;
+            }
+
+            if (!result.IsSuccessful)
+            {
+                if (result.FieldErrors is not null && result.FieldErrors.Any())
+                {
+                    fieldErrors = result.FieldErrors;
+                }
+                else
+                {
+                    errorMsg = result.ErrorMsg ?? "Login failed.";
+                }
+                return;
+            }
+
+            await AuthProvider.NotifyLogin(result.Value!);
+            Nav.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            errorMsg = $"Something went wrong: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

@@ -2,6 +2,7 @@
 using InventoryService.Application.Commands;
 using InventoryService.Application.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Warehouse.Shared.DTOs.StockUnitDTO;
@@ -24,7 +25,7 @@ namespace InventoryService.Controllers
         /// COMMANDS
 
         [HttpPost("add-stock-unit")]
-        //[Authorize(Roles = "Admin,Seller")]
+        [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> AddStockUnit([FromBody] AddStockUnitRequest addStockUnitRequest, CancellationToken cancellationToken)
         {
             AddStockUnitCommand command = mapper.Map<AddStockUnitCommand>(addStockUnitRequest);
@@ -35,7 +36,7 @@ namespace InventoryService.Controllers
         }
 
         [HttpPut("update-stock-unit")]
-        //[Authorize(Roles = "Admin,Seller")]
+        [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> UpdateItem([FromBody] UpdateStockUnitRequest updateStockUnitRequest, CancellationToken cancellationToken)
         {
             UpdateStockUnitCommand command = mapper.Map<UpdateStockUnitCommand>(updateStockUnitRequest);
@@ -46,7 +47,7 @@ namespace InventoryService.Controllers
         }
 
         [HttpDelete("delete/{id}")]
-        //[Authorize(Roles = "Admin,Seller")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteItem([FromRoute] int id, CancellationToken cancellationToken)
         {
             var result = await mediator.Send(new DeleteStockUnitCommand(id), cancellationToken);

@@ -1,0 +1,107 @@
+﻿@page "/StockUnits/{ItemId:int}/Edit/{Id:int}"
+
+@using Warehouse.Data.Data.DTOs.StockUnitDTOs
+@using Warehouse.Web.Components.Reusable
+@using Warehouse.Services
+@using Warehouse.Web.Models
+@using AutoMapper;
+
+@inject StockUnitService stock_unit_service
+@inject NavigationManager Nav
+@inject IMapper mapper
+
+<PageTitle>Edit Item</PageTitle>
+
+<Alert error="@error" succes="@succes"></Alert>
+
+<EditForm OnValidSubmit="Edit" Model="NewItem">
+    
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="CurrentPrice">Current Price</label>
+        <InputNumber id="CurrentPrice" step="0.1" @bind-Value="NewItem.CurrentPrice" class="form-control"></InputNumber>
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="Note">Note</label>
+        <InputTextArea id="Note" @bind-Value="NewItem.Note" class="form-control"></InputTextArea>
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="Status">Status</label>
+        <InputSelect id="Status" @bind-Value="NewItem.Status" class="form-control">
+            @foreach (var status in Enum.GetValues<Warehouse.Data.Entities.UnitStatus>())
+            {
+                <option value="@status">@status</option>
+            }
+        </InputSelect>
+    </div>
+    <br />
+
+    @if (Loading)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="button" class="btn btn-primary" @onclick="Return">Go Back</button>
+    }
+
+</EditForm>
+
+
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [Parameter] public int ItemId { get; set; }
+
+    public StockUnitUpdateDTO NewItem = new StockUnitUpdateDTO();
+    private string? error = null;
+    private string? succes = null;
+    public bool Loading = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        error = null;
+        succes = null;
+        Loading = true;
+
+        var Result = await stock_unit_service.findById(Id);
+
+        if (!Result.IsSuccessful)
+        {
+            error = Result.ErrorMsg;
+            Loading = false;
+            return;
+        }
+        mapper.Map(Result.Value, NewItem);
+        Loading = false;
+    }
+    public async Task Edit()
+    {
+        error = null;
+        succes = null;
+        Loading = true;
+
+        NewItem.ItemId = ItemId;
+        var Result = await stock_unit_service.edit(Id, NewItem);
+
+        if (!Result.IsSuccessful)
+        {
+            error = Result.ErrorMsg;
+            Loading = false;
+            return;
+        }
+        mapper.Map(Result.Value, NewItem);
+        succes = "Successfully updated item!";
+        Loading = false;
+    }
+    public void Return()
+    {
+        Nav.NavigateTo($"/StockUnits/{ItemId}");
+    }
+}
+

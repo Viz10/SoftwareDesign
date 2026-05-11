@@ -1,0 +1,16 @@
+﻿@if (Errors != null && Errors.Any())
+{
+    foreach (var errorGroup in Errors)
+    {
+        foreach (var msg in errorGroup.Value)
+        {
+            <p class="text-danger small mt-1">
+                <strong>@errorGroup.Key:</strong> @msg
+            </p>
+        }
+    }
+}
+
+@code {
+    [Parameter] public Dictionary<string, List<string>> Errors { get; set; } = new();
+}

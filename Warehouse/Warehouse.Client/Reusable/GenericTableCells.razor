@@ -1,0 +1,51 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Warehouse.Client.Models
+@inject NavigationManager Nav
+
+
+    @foreach (var cell in CellNameValuePair)
+{
+    var currentId = Convert.ToInt32(cell["Id"]);
+    <tr>
+        @foreach (var col in Model.ColumnNames)
+        {
+            <td>@cell[col]</td>
+        }
+        <AuthorizeView Roles="Admin">
+            <td>
+                <button class="btn btn-sm btn-outline-danger"
+                        @onclick='() => Model.OnDeleteCallback.InvokeAsync(currentId)'>
+                    Delete
+                </button>
+            </td>
+        </AuthorizeView>
+        <td>
+            <AuthorizeView Roles="Admin,Seller">
+                <button class="btn btn-sm btn-outline"
+                        @onclick='() => Nav.NavigateTo(Model.EditBasePagePath + $"/{currentId}")'>
+                    Edit
+                </button>
+            </AuthorizeView>
+        </td>
+        
+        <AuthorizeView Roles="Admin,Seller">
+            @if (Model.ExtraActions != null)
+            {
+                @foreach (var action in Model.ExtraActions)
+                {
+                    <td>
+                        <button class="btn btn-sm btn-outline"
+                                @onclick='() => action.Action.InvokeAsync(currentId)'>
+                            @action.ButtonLabel
+                        </button>
+                    </td>
+                }
+            }
+        </AuthorizeView>
+    </tr>
+}
+
+@code {
+    [Parameter] public GenericTablePlugIns Model { get; set; } = null!;
+    [Parameter] public IEnumerable<Dictionary<string, object>> CellNameValuePair { get; set; } = null!;
+}

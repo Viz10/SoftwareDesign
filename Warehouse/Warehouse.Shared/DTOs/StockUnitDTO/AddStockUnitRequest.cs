@@ -4,5 +4,11 @@ using System.Text;
 
 namespace Warehouse.Shared.DTOs.StockUnitDTO
 {
-    public record AddStockUnitRequest(int ItemId, decimal? CurrentPrice, string? Note, int Quantity);
+    public record AddStockUnitRequest
+    {
+        public int ItemId { get; set; }
+        public decimal? CurrentPrice { get; set; }
+        public string? Note { get; set; }
+        public int Quantity { get; set; }
+    }
 }

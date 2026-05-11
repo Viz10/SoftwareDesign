@@ -10,6 +10,7 @@ using Warehouse.Shared.DTOs.AccountDTO;
 
 using LoginRequest = Warehouse.Shared.DTOs.AccountDTO.LoginRequest;
 using RegisterRequest = Warehouse.Shared.DTOs.AccountDTO.RegisterRequest;
+using SaveAccountEmailRequest = Warehouse.Shared.DTOs.AccountDTO.SaveAccountEmailRequest;
 
 
 namespace AccountService.Controllers
@@ -54,6 +55,14 @@ namespace AccountService.Controllers
         {
             var result = await mediator.Send(new GetAccountEmailsQuery(),ct);
             return result.IsSuccessful ? Ok(result.Value) : NotFound(result.GetErrors());
+        }
+
+        [HttpPost("internal/save-email")]
+        public async Task<IActionResult> SaveEmail([FromBody] SaveAccountEmailRequest req,CancellationToken ct)
+        {
+            SaveAccountEmailCommand command = mapper.Map<SaveAccountEmailCommand>(req);
+            var result = await mediator.Send(command, ct);
+            return result.IsSuccessful ? Ok() : BadRequest(result.GetErrors());
         }
     }
 }

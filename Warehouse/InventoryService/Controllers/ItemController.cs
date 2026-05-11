@@ -27,7 +27,7 @@ namespace InventoryService.Controllers
         /// COMMANDS
 
         [HttpPost("add-item")]
-        //[Authorize(Roles = "Admin,Seller")]
+        [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> AddItem([FromBody] AddItemRequest addItemRequest, CancellationToken cancellationToken)
         {
             AddItemCommand command = mapper.Map<AddItemCommand>(addItemRequest);
@@ -38,7 +38,7 @@ namespace InventoryService.Controllers
         }
         
         [HttpPut("update-item")]
-        //[Authorize(Roles = "Admin,Seller")]
+        [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> UpdateItem([FromBody] UpdateItemRequest updateItemRequest, CancellationToken cancellationToken)
         {
             UpdateItemCommand command = mapper.Map<UpdateItemCommand>(updateItemRequest);
@@ -49,7 +49,7 @@ namespace InventoryService.Controllers
         }
         
         [HttpDelete("delete/{id}")]
-        //[Authorize(Roles = "Admin,Seller")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteItem([FromRoute] int id, CancellationToken cancellationToken)
         {
             var result = await mediator.Send(new DeleteItemCommand(id), cancellationToken);
@@ -66,6 +66,7 @@ namespace InventoryService.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> GetById([FromRoute] int id, CancellationToken cancellationToken)
         {
             var result = await mediator.Send(new GetItemQuery(id), cancellationToken);
@@ -73,10 +74,18 @@ namespace InventoryService.Controllers
         }
 
         [HttpGet("Name/{id}")]
+        [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> GetNameById([FromRoute] int id, CancellationToken cancellationToken)
         {
             var result = await mediator.Send(new GetStockUnitItemNameQuery(id), cancellationToken);
             return result.IsSuccessful ? Ok(result.Value) : NotFound(result.GetErrors());
+        }
+
+        [HttpGet("export-items")]
+        public async Task<IActionResult> GetExportedItems([FromQuery] string strategyName, CancellationToken cancellationToken)
+        {
+            var result = await mediator.Send(new ExportItemsQuery(strategyName), cancellationToken);
+            return !string.IsNullOrEmpty(result) ? Ok(result) : NotFound("Error exporting items!");
         }
     }
 }

@@ -9,6 +9,7 @@ namespace AccountService.Application.Mappings
     {
         public AccountMappingProfile()
         {
+            CreateMap<SaveAccountEmailRequest, SaveAccountEmailCommand>();
             CreateMap<Account, User>();
             CreateMap<RegisterRequest, RegisterAccountCommand>();
             CreateMap<LoginRequest, LoginCommand>();

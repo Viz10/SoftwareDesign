@@ -1,0 +1,83 @@
+﻿@page "/View-Emails"
+@using Warehouse.Client.Reusable
+@using Warehouse.Shared.Common
+@using System.Net.Http.Json
+@inject IHttpClientFactory HttpFactory
+
+<PageTitle>Warehouse Account Emails</PageTitle>
+
+<div class="container mt-4">
+    <h3>Warehouse Account Emails</h3>
+    
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <div class="alert alert-danger">@error</div>
+    }
+
+    @if (emailList == null && error == null)
+    {
+        <div class="d-flex justify-content-center my-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (emailList != null)
+    {
+        <div class="overflow-auto border rounded p-3 bg-light" style="max-height: 500px;">
+            <div class="list-group">
+                @if (emailList.Any())
+                {
+                    @foreach (var email in emailList)
+                    {
+                        <div class="list-group-item list-group-item-action mb-2 shadow-sm rounded">
+                            <p class="mb-0" style="white-space: pre-wrap;">@email</p>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted text-center">No emails found for this account.</p>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<string>? emailList;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEmails();
+    }
+
+    private async Task LoadEmails()
+    {
+        try
+        {
+            var client = HttpFactory.CreateClient("AccountService");
+            
+            var response = await client.GetAsync("api/account/emails");
+
+            if (response.IsSuccessStatusCode)
+            {
+                emailList = await response.Content.ReadFromJsonAsync<List<string>>();
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                emailList = new List<string>();
+                error = "No emails were found";
+            }
+            else
+            {
+                error = "You do not have permission to view this content or the session expired.";
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to connect to service: {ex.Message}";
+        }
+    }
+}

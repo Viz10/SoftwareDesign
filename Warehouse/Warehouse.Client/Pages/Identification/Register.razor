@@ -1,0 +1,128 @@
+﻿@page "/register"
+@using Warehouse.Client.Reusable
+@using Warehouse.Shared.DTOs.AccountDTO
+@using Warehouse.Shared.Enums
+@using Warehouse.Shared.Common
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@inject IHttpClientFactory HttpFactory
+@inject NavigationManager Nav
+
+<PageTitle>Register</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <h3 class="mb-4 text-center">Register</h3>
+
+            @*Server/Exception Errors *@
+            @if (!string.IsNullOrEmpty(errorMsg))
+            {
+                <div class="alert alert-danger">@errorMsg</div>
+            }
+            
+            @if (!string.IsNullOrEmpty(successMsg))
+            {
+                <div class="alert alert-success">@successMsg</div>
+            }
+
+            @*Dictionary Error Component *@
+            @if (fieldErrors.Any())
+            {
+                <DictionaryErrors Errors="fieldErrors" />
+            }
+
+            <EditForm Model="command" OnSubmit="HandleRegister">
+                <div class="form-group mb-3">
+                    <label>Email</label>
+                    <InputText class="form-control" type="email" @bind-Value="command.Email" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Password</label>
+                    <InputText class="form-control" type="password" @bind-Value="command.Password" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label>Confirm Password</label>
+                    <InputText class="form-control" type="password" @bind-Value="command.ConfirmPassword" />
+                </div>
+
+                <AuthorizeView Roles="Admin" Context="authContext">
+                    <div class="form-group mb-3">
+                        <label>Account Type</label>
+                        <InputSelect @bind-Value="command.AccountType" class="form-control">
+                            @foreach (var type in Enum.GetValues<AccountType>())
+                            {
+                                <option value="@type">@type</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </AuthorizeView>
+
+                <hr />
+
+                @if (isLoading)
+                {
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                }
+                else
+                {
+                    <button type="submit" class="btn btn-primary w-100 mb-2">Create Account</button>
+                    <button type="button" class="btn btn-outline-secondary w-100" @onclick='() => Nav.NavigateTo("/")'>Go Back</button>
+                }
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterRequest command = new();
+    private Dictionary<string, List<string>> fieldErrors = new();
+    
+    private string? errorMsg;
+    private string? successMsg;
+    private bool isLoading = false;
+
+    private async Task HandleRegister()
+    {
+        isLoading = true;
+        errorMsg = null;
+        successMsg = null;
+        fieldErrors = new();
+
+        try
+        {
+            var client = HttpFactory.CreateClient("AccountService");
+            var response = await client.PostAsJsonAsync("api/account/register", command);
+            
+            var result = await response.Content.ReadFromJsonAsync<Result<string>>();
+
+            if (result is null)
+            {
+                errorMsg = "Critical connection error.";
+                return;
+            }
+
+            if (!result.IsSuccessful)
+            {
+                fieldErrors = result.FieldErrors ?? new();
+                if (!fieldErrors.Any()) errorMsg = result.ErrorMsg ?? "Registration failed.";
+                return;
+            }
+
+            successMsg = "Registration successful!";
+            command = new ();
+        }
+        catch (Exception ex)
+        {
+            errorMsg = $"System error: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

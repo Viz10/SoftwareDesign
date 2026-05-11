@@ -1,0 +1,9 @@
+﻿@page "/Shipping/{StockUnitId:int}"
+
+<h3>Shipping product</h3>
+<br />
+<h3>@StockUnitId</h3>
+
+@code {
+    [Parameter] public int StockUnitId { get; set; }
+}
