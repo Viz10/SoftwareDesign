@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using InventoryService.Application.DomainService;
 using InventoryService.Infrastructure.DbRepository;
 using InventoryService.Infrastructure.Entities;
 using MediatR;
@@ -14,16 +15,16 @@ using Warehouse.Shared.DTOs.AccountDTO;
 
 namespace InventoryService.Application.Commands
 {
-    public record AddItemCommand(string Name, decimal? ReferencePricePerItem, string? Description) : IRequest<Result<string>>;
+    public record AddItemCommand(string Name, decimal? ReferencePricePerItem, string? Description) : IRequest<Result<Message>>;
 
-    internal class AddItemCommandHandler : IRequestHandler<AddItemCommand, Result<string>>
+    internal class AddItemCommandHandler : IRequestHandler<AddItemCommand, Result<Message>>
     {
         private readonly InventoryServiceDbContext dbContext;
         private readonly IMapper mapper;
         private readonly ItemDomainService _itemDomainService;
         private readonly IHttpClientFactory _httpFactory;
         private readonly CurrentUser _user;
-       
+
         public AddItemCommandHandler(
             InventoryServiceDbContext _dbContext,
             IMapper _mapper,
@@ -38,20 +39,18 @@ namespace InventoryService.Application.Commands
             _user = user;
         }
 
-        public async Task<Result<string>> Handle(AddItemCommand command, CancellationToken ct)
+        public async Task<Result<Message>> Handle(AddItemCommand command, CancellationToken ct)
         {
             try
             {
                 var result_dup = await _itemDomainService.isDuplicate(command.Name, null);
-                if (!result_dup.IsSuccessful) return Result<string>.Fail(result_dup.ErrorMsg);
-                if (result_dup.Value) return Result<string>.Fail("Duplicate Item");
+                if (!result_dup.IsSuccessful) return Result<Message>.Fail(result_dup.Errors!["Error"].First());
 
                 var result_restored = await _itemDomainService.Restore(command);
-                if (!result_restored.IsSuccessful) return Result<string>.Fail(result_restored.ErrorMsg);
+                if (!result_restored.IsSuccessful) return Result<Message>.Fail(result_restored.Errors!["Error"].First());
 
-                if (result_restored.Value)
+                if (result_restored.Value)/// restored
                 {
-                    /// restored
                     await dbContext.SaveChangesAsync(ct);
                 }
                 else
@@ -72,15 +71,15 @@ namespace InventoryService.Application.Commands
                     OccurredAt = DateTimeOffset.UtcNow
                 }, ct);
 
-                return Result<string>.Success("Successfully added item!");
+                return Result<Message>.Success(Message.CreateMessage("Succesfully added new item!"));
             }
             catch (DbUpdateException ex)
             {
-                return Result<string>.Fail(ex.Message);
+                return Result<Message>.Fail(ex.Message);
             }
             catch (Exception ex)
             {
-                return Result<string>.Fail(ex.Message);
+                return Result<Message>.Fail(ex.Message);
             }
         }
     }

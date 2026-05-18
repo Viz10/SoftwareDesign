@@ -1,10 +1,12 @@
 ﻿@page "/register"
+
 @using Warehouse.Client.Reusable
 @using Warehouse.Shared.DTOs.AccountDTO
 @using Warehouse.Shared.Enums
 @using Warehouse.Shared.Common
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Forms
+
 @inject IHttpClientFactory HttpFactory
 @inject NavigationManager Nav
 
@@ -15,22 +17,8 @@
         <div class="col-md-4">
             <h3 class="mb-4 text-center">Register</h3>
 
-            @*Server/Exception Errors *@
-            @if (!string.IsNullOrEmpty(errorMsg))
-            {
-                <div class="alert alert-danger">@errorMsg</div>
-            }
-            
-            @if (!string.IsNullOrEmpty(successMsg))
-            {
-                <div class="alert alert-success">@successMsg</div>
-            }
-
-            @*Dictionary Error Component *@
-            @if (fieldErrors.Any())
-            {
-                <DictionaryErrors Errors="fieldErrors" />
-            }
+            <Alert error="@alertMsg"></Alert>
+            <DictionaryErrors Errors="fieldErrors" />
 
             <EditForm Model="command" OnSubmit="HandleRegister">
                 <div class="form-group mb-3">
@@ -48,7 +36,7 @@
                     <InputText class="form-control" type="password" @bind-Value="command.ConfirmPassword" />
                 </div>
 
-                <AuthorizeView Roles="Admin" Context="authContext">
+                <AuthorizeView Roles="Admin" Context="authContext"> @*only admin can select role*@
                     <div class="form-group mb-3">
                         <label>Account Type</label>
                         <InputSelect @bind-Value="command.AccountType" class="form-control">
@@ -74,6 +62,7 @@
                     <button type="button" class="btn btn-outline-secondary w-100" @onclick='() => Nav.NavigateTo("/")'>Go Back</button>
                 }
             </EditForm>
+
         </div>
     </div>
 </div>
@@ -81,44 +70,41 @@
 @code {
     private RegisterRequest command = new();
     private Dictionary<string, List<string>> fieldErrors = new();
-    
-    private string? errorMsg;
-    private string? successMsg;
+
+    private string? alertMsg;
     private bool isLoading = false;
 
     private async Task HandleRegister()
     {
         isLoading = true;
-        errorMsg = null;
-        successMsg = null;
+        alertMsg = null;
         fieldErrors = new();
 
         try
         {
             var client = HttpFactory.CreateClient("AccountService");
             var response = await client.PostAsJsonAsync("api/account/register", command);
-            
-            var result = await response.Content.ReadFromJsonAsync<Result<string>>();
+            var result = await response.Content.ReadFromJsonAsync<Result>();
 
             if (result is null)
             {
-                errorMsg = "Critical connection error.";
+                alertMsg = "Unexpected error, please try again.";
                 return;
             }
 
             if (!result.IsSuccessful)
             {
-                fieldErrors = result.FieldErrors ?? new();
-                if (!fieldErrors.Any()) errorMsg = result.ErrorMsg ?? "Registration failed.";
+                fieldErrors = result.Errors!;
                 return;
             }
 
-            successMsg = "Registration successful!";
-            command = new ();
+            alertMsg = "Succesfully registered";
+            command = new();
+
         }
         catch (Exception ex)
         {
-            errorMsg = $"System error: {ex.Message}";
+            alertMsg = $"System error: {ex.Message}";
         }
         finally
         {

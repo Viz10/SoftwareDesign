@@ -5,21 +5,22 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Warehouse.Shared.Common;
 
-namespace InventoryService.Application
+namespace InventoryService.Application.DomainService
 {
     public class ItemDomainService(InventoryServiceDbContext dbContext,IMapper mapper)
     {
         /// Check items for duplicate when adding/editing
-        public async Task<Result<bool>> isDuplicate(string name, int? editItemId)
+        public async Task<Result> isDuplicate(string name, int? editItemId)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(name))
                 {
-                    return Result<bool>.Success(false);
+                    return Result.Success();
                 }
 
-                bool exists;
+                bool exists=false;
+                
                 if (editItemId.HasValue)
                 {
                     exists = await dbContext.Items.AnyAsync(item => item.Name.ToLower() == name.ToLower() && item.Id != editItemId);
@@ -29,11 +30,11 @@ namespace InventoryService.Application
                     exists = await dbContext.Items.AnyAsync(item => item.Name.ToLower() == name.ToLower());
                 }
 
-                return Result<bool>.Success(exists);
+                return exists ? Result.Fail("Duplicate item") : Result.Success();
             }
             catch (Exception ex)
             {
-                return Result<bool>.Fail(ex.Message);
+                return Result.Fail(ex.Message);
             }
         }
         
@@ -51,17 +52,17 @@ namespace InventoryService.Application
                     deletedItem.IsDeleted = false;
                     deletedItem.LastModifiedTime = DateTimeOffset.UtcNow;
 
-                    mapper.Map(itemSend, deletedItem);
+                    mapper.Map(itemSend, deletedItem); /// provide with new values
 
                     var stock = await dbContext.Stocks.IgnoreQueryFilters()
                         .FirstOrDefaultAsync(s => s.ItemId == deletedItem.Id);
 
                     if (stock != null)
                         stock.IsDeleted = false;
-
-                    return Result<bool>.Success(true);
+                    
+                    return Result<bool>.Success(true); /// restored
                 }
-                return Result<bool>.Success(false);
+                return Result<bool>.Success(false); /// not restored
             }
             catch (Exception ex)
             {

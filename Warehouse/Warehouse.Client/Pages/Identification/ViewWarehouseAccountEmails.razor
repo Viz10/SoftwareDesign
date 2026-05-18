@@ -1,4 +1,4 @@
-﻿@page "/View-Emails"
+﻿@page "/view-emails"
 @using Warehouse.Client.Reusable
 @using Warehouse.Shared.Common
 @using System.Net.Http.Json
@@ -9,12 +9,10 @@
 <div class="container mt-4">
     <h3>Warehouse Account Emails</h3>
     
-    @if (!string.IsNullOrEmpty(error))
-    {
-        <div class="alert alert-danger">@error</div>
-    }
+    <Alert error="@alertMsg"></Alert>
+    <DictionaryErrors Errors="fieldErrors" />
 
-    @if (emailList == null && error == null)
+    @if (isLoading)
     {
         <div class="d-flex justify-content-center my-5">
             <div class="spinner-border text-primary" role="status">
@@ -45,8 +43,11 @@
 </div>
 
 @code {
-    private List<string>? emailList;
-    private string? error;
+    private List<string> emailList = new();
+    private Dictionary<string, List<string>> fieldErrors = new();
+
+    private string? alertMsg;
+    private bool isLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -55,29 +56,37 @@
 
     private async Task LoadEmails()
     {
+        isLoading = true;
+        alertMsg = null;
+        fieldErrors = new();
+
         try
         {
             var client = HttpFactory.CreateClient("AccountService");
-            
             var response = await client.GetAsync("api/account/emails");
+            var result = await response.Content.ReadFromJsonAsync<Result<List<string>>>();
 
-            if (response.IsSuccessStatusCode)
+            if (result is null)
             {
-                emailList = await response.Content.ReadFromJsonAsync<List<string>>();
+                alertMsg = "Unexpected error, please try again.";
+                return;
             }
-            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+
+            if (!result.IsSuccessful)
             {
-                emailList = new List<string>();
-                error = "No emails were found";
+                fieldErrors = result.Errors!;
+                return;
             }
-            else
-            {
-                error = "You do not have permission to view this content or the session expired.";
-            }
+
+            emailList = result.Value;
         }
         catch (Exception ex)
         {
-            error = $"Failed to connect to service: {ex.Message}";
+            alertMsg = $"Something went wrong: {ex.Message} {ex.InnerException?.Message}";
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 }

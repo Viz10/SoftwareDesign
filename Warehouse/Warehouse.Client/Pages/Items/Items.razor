@@ -1,20 +1,21 @@
-﻿@page "/Items"
+﻿@page "/items"
 @attribute [Authorize]
 
-@using Microsoft.AspNetCore.Authorization
+@using Warehouse.Client.Auth
 @using Warehouse.Client.Reusable
-@using Warehouse.Data.Data.DTOs.ItemDTOs
-@using Warehouse.Services.Services.Exports
-@using Warehouse.Web.Components.Reusable
-@using Warehouse.Services
-@using Warehouse.Web.Models
+@using Warehouse.Shared.DTOs.ItemDTO
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Authorization
+@using Warehouse.Shared.Common
 
-@inject ItemService itemservice
+@inject IHttpClientFactory HttpFactory
 @inject NavigationManager Nav
+@inject JwtAuthStateProvider AuthProvider
+@inject IJSRuntime JS
 
 <PageTitle>Warehouse Items</PageTitle>
 
-<Alert error="@error"></Alert>
+<Alert error="@alertMsg"></Alert>
 
 <SearchBar PassSearchName="HandleSearchByName" Placeholder="Search by name"></SearchBar>
 
@@ -34,85 +35,126 @@
 <ExportButtons eventCallback="Export"></ExportButtons>
 
 @code {
-
-    private string? error;
+    private Dictionary<string, List<string>> fieldErrors = new();
+    private string? alertMsg;
+    
     public string? searchByName { get; set; }
     public string? orderBy { get; set; }
-  
+   
     public IEnumerable<Dictionary<string, object>> CellNameValuePair { get; set; } = default!;
     public GenericTablePlugIns Model { get; set; } = default!;
+    
     private List<string> Selectorder = default!;
-    public List<ItemGetDTO> ExportValues = new List<ItemGetDTO>();
+    private List<ItemGetResponse> ExportValues = new List<ItemGetResponse>();
+
 
     protected override async Task OnInitializedAsync()
     {
-        Selectorder = new List<string> {"ascending", "descending" };
+        Selectorder = new List<string> {"ascending", "descending"};
         await InitCellNameValuePairs();
         InitTablePlugins();
     }
 
-    public async Task InitCellNameValuePairs()
+    private async Task InitCellNameValuePairs()
     {
-        var Result = await itemservice.searchItemTypeByPartialName(searchByName, orderBy);
+        alertMsg = null;
+        fieldErrors = new();
 
-        if (!Result.IsSuccessful)
+        try
         {
-            error = Result.ErrorMsg;
-            CellNameValuePair = new List<Dictionary<string, object>>();
-            return;
+            var client = HttpFactory.CreateClient("InventoryService");
+            var response = await client.GetAsync($"api/item?name={searchByName}&sortBy={orderBy}");
+            var result = await response.Content.ReadFromJsonAsync<Result<List<ItemGetResponse>>>();
+
+            if (result is null)
+            {
+                alertMsg = "Unexpected error, please try again.";
+                return;
+            }
+
+            if (!result.IsSuccessful)
+            {
+                fieldErrors = result.Errors!;
+                return;
+            }
+
+            ExportValues = result.Value!;
+            CellNameValuePair = result.Value!.Select(dto => new Dictionary<string, object>
+            {
+                ["Id"] = dto.Id,
+                ["Name"] = dto.Name,
+                ["Description"] = dto.Description ?? "",
+                ["Base Price Per Item"] = dto.ReferencePricePerItem ?? 0,
+                ["Quantity"] = dto.Quantity
+            });
         }
-
-        ExportValues = Result.Value;
-        CellNameValuePair = Result.Value.Select(dto => new Dictionary<string, object>
+        catch(Exception ex)
         {
-            ["Id"] = dto.Id,
-            ["Name"] = dto.Name,
-            ["Description"] = dto.Description ?? "",
-            ["Base Price Per Item"] = dto.ReferencePricePerItem ?? 0,
-            ["Quantity"] = dto.Quantity
-        });
-
+            alertMsg = $"Something went wrong: {ex.Message} {ex.InnerException?.Message}";
+        }
     }
-    public void InitTablePlugins()
+    private void InitTablePlugins()
     {
         Model = new GenericTablePlugIns()
         {
             TableTitle = "Items Table",
             ColumnNames = new List<string> { "Id", "Name", "Description", "Base Price Per Item", "Quantity" },
-            EditBasePagePath = "/Items/Edit",
-            AddPagePath = "/Items/Add",
+            EditBasePagePath = "/items/edit",
+            AddPagePath = "/items/add",
             OnDeleteCallback = EventCallback.Factory.Create<int>(this,HandleDelete),
-            ExtraActions = new List<(string ButtonLabel, EventCallback<int> Action)> { ("See Products", EventCallback.Factory.Create<int>(this, (id) => Nav.NavigateTo($"/StockUnits/{id}"))) }
+            ExtraActions = new List<(string ButtonLabel, EventCallback<int> Action)> { ("See Products", EventCallback.Factory.Create<int>(this, (id) => Nav.NavigateTo($"/stockUnits/{id}"))) }
         };
     }
+    private async Task Export(string format)
+    {
+        alertMsg = null;
+        try
+        {
+            var client = HttpFactory.CreateClient("InventoryService");
+            var response = await client.GetAsync($"api/item/export-items?strategyName={format}");
+            var result = await response.Content.ReadAsStringAsync();
 
-    /// every time the reference CellNameValuePair changes , it propagates through components to rerender where its used
+            await JS.InvokeVoidAsync("downloadFile", $"items.{format}", result);
+        }
+        catch (Exception ex)
+        {
+            alertMsg = $"Something went wrong: {ex.Message} {ex.InnerException?.Message}";
+        }
+    }
+
     public async Task HandleDelete(int id) {
 
-        error = null;
+        alertMsg = null;
+        fieldErrors = new();
 
-        var Result = await itemservice.delete(id);
-
-        if (!Result.IsSuccessful)
+        try
         {
-            error = Result.ErrorMsg;
-            return;
-        }
+            var client = HttpFactory.CreateClient("InventoryService");
+            var response = await client.DeleteAsync($"api/item/delete/{id}");
+            var result = await response.Content.ReadFromJsonAsync<Result>();
 
-        await InitCellNameValuePairs(); /// refresh data reference
+            if (result is null)
+            {
+                alertMsg = "Unexpected error, please try again.";
+                return;
+            }
+
+            if (!result.IsSuccessful)
+            {
+                fieldErrors = result.Errors!;
+                return;
+            }
+            /// every time the reference CellNameValuePair changes , it propagates through components to rerender where its used
+            await InitCellNameValuePairs(); 
+        }
+        catch (Exception ex)
+        {
+            alertMsg = $"Something went wrong: {ex.Message} {ex.InnerException?.Message}";
+        }
     }
     public async Task HandleSearchByName(string? name)
     {
         searchByName = name;
         await InitCellNameValuePairs();
-    }
-    
-    [Inject] private Export ExportService { get; set; } = default!;
-    [Inject] private IJSRuntime JS { get; set; } = default!;
-    
-    private async Task Export(string format)
-    {
-        var content = await ExportService.ExportData(ExportValues, format);
-        await JS.InvokeVoidAsync("downloadFile", $"items.{format}", content);
     }
 }

@@ -8,8 +8,7 @@ namespace Warehouse.Shared.Auth
 {
     public static class JwtExtensions
     {
-        public static IServiceCollection AddSharedJwtAuth(
-            this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddSharedJwtAuth(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
@@ -22,8 +21,7 @@ namespace Warehouse.Shared.Auth
                         ValidateIssuerSigningKey = true,
                         ValidIssuer = configuration["CreateJWT:Issuer"],
                         ValidAudience = configuration["CreateJWT:Audience"],
-                        IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(configuration["CreateJWT:Token"]!))
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["CreateJWT:Token"]!))
                     };
                 });
 

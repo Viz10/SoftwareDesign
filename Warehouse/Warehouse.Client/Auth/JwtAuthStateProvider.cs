@@ -5,12 +5,11 @@ using System.Security.Claims;
 
 namespace Warehouse.Client.Auth
 {
-    public class JwtAuthStateProvider : AuthenticationStateProvider // reads token, parses claims
+    public class JwtAuthStateProvider : AuthenticationStateProvider 
     {
         private readonly ILocalStorageService _localStorage;
 
-        public JwtAuthStateProvider(ILocalStorageService localStorage)
-            => _localStorage = localStorage;
+        public JwtAuthStateProvider(ILocalStorageService localStorage) => _localStorage = localStorage;
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
@@ -19,26 +18,21 @@ namespace Warehouse.Client.Auth
             if (string.IsNullOrEmpty(token))
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
 
-            var claims = ParseClaimsFromJwt(token); // reads claims from token directly
-            var identity = new ClaimsIdentity(claims, "jwt");
+            var claims = ParseClaimsFromJwt(token);
+            var identity = new ClaimsIdentity(claims, "jwt", ClaimTypes.Email, ClaimTypes.Role);
             return new AuthenticationState(new ClaimsPrincipal(identity));
         }
-
         public async Task NotifyLogin(string token)
         {
             await _localStorage.SetItemAsStringAsync("token", token);
             var claims = ParseClaimsFromJwt(token);
-            var identity = new ClaimsIdentity(claims, "jwt");
-            NotifyAuthenticationStateChanged(
-                Task.FromResult(new AuthenticationState(new ClaimsPrincipal(identity))));
+            var identity = new ClaimsIdentity(claims, "jwt", ClaimTypes.Email, ClaimTypes.Role);
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(new ClaimsPrincipal(identity)))); /// notify UI for authorization
         }
-
         public async Task NotifyLogout()
         {
             await _localStorage.RemoveItemAsync("token");
-            NotifyAuthenticationStateChanged(
-                Task.FromResult(new AuthenticationState(
-                    new ClaimsPrincipal(new ClaimsIdentity()))));
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()))));
         }
 
         private IEnumerable<Claim> ParseClaimsFromJwt(string token)

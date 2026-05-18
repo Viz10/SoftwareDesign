@@ -15,9 +15,9 @@ namespace AccountService.Application.Commands
 {
     public record LoginCommand(
         string Email,
-        string Password) : IRequest<Result<string>>;
+        string Password) : IRequest<Result<Message>>;
 
-    internal class LoginCommandHandler : IRequestHandler<LoginCommand, Result<string>>
+    internal class LoginCommandHandler : IRequestHandler<LoginCommand, Result<Message>>
     {
         private readonly AccountServiceDbContext dbContext;
         private readonly IMapper mapper;
@@ -30,7 +30,7 @@ namespace AccountService.Application.Commands
             configuration = _configuration;
         }
 
-        public async Task<Result<string>> Handle(LoginCommand request, CancellationToken ct)
+        public async Task<Result<Message>> Handle(LoginCommand request, CancellationToken ct)
         {
             try
             { 
@@ -39,17 +39,17 @@ namespace AccountService.Application.Commands
                .FirstOrDefaultAsync(ct);
 
                 if (account is null || !BCrypt.Net.BCrypt.Verify(request.Password, account.PasswordHashed))
-                    return Result<string>.Fail("Account does not exist or invalid email");
+                    return Result<Message>.Fail("Account does not exist or invalid email");
 
                 var user = mapper.Map<User>(account);
 
                 var token = CreateToken(user);
 
-                return Result<string>.Success(token);
+                return Result<Message>.Success(Message.CreateMessage(token));
             }
             catch (Exception ex)
             {
-                return Result<string>.Fail(ex.Message);
+                return Result<Message>.Fail(ex.Message);
             }
         }
         private string CreateToken(User user)

@@ -9,11 +9,13 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// Auth
+// JWT Storage
 builder.Services.AddBlazoredLocalStorage();
+
+// Auth
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthStateProvider>();
-builder.Services.AddScoped<JwtAuthStateProvider>();
+builder.Services.AddScoped(sp => (JwtAuthStateProvider)sp.GetRequiredService<AuthenticationStateProvider>());
 builder.Services.AddTransient<AuthTokenHandler>();
 
 // API clients

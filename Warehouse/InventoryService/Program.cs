@@ -7,7 +7,7 @@ using Scalar.AspNetCore;
 using System.Reflection;
 using Warehouse.Shared.Common;
 using Warehouse.Shared.Auth;
-using InventoryService.Application;
+using InventoryService.Application.DomainService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,11 +31,21 @@ builder.Services.AddScoped<ItemDomainService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
 
-builder.Services.AddHttpClient("NotificationService",c => c.BaseAddress = new Uri("https://localhost:7193"));
+builder.Services.AddHttpClient("NotificationService",c => c.BaseAddress = new Uri("https://localhost:7222"));
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowBlazor", policy =>
+    {
+        policy.WithOrigins("https://localhost:7061")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
 
@@ -47,6 +57,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowBlazor");
 
 app.UseAuthentication();
 

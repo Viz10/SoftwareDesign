@@ -27,33 +27,29 @@ namespace InventoryService.Controllers
         /// COMMANDS
 
         [HttpPost("add-item")]
-        [Authorize(Roles = "Admin,Seller")]
+        //[Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> AddItem([FromBody] AddItemRequest addItemRequest, CancellationToken cancellationToken)
         {
             AddItemCommand command = mapper.Map<AddItemCommand>(addItemRequest);
-
             var result = await mediator.Send(command, cancellationToken);
-
-            return result.IsSuccessful ? Ok(result.Value) : BadRequest(result.GetErrors());
+            return result.IsSuccessful ? Ok(result) : BadRequest(result);
         }
         
         [HttpPut("update-item")]
-        [Authorize(Roles = "Admin,Seller")]
+        //[Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> UpdateItem([FromBody] UpdateItemRequest updateItemRequest, CancellationToken cancellationToken)
         {
             UpdateItemCommand command = mapper.Map<UpdateItemCommand>(updateItemRequest);
-
             var result = await mediator.Send(command, cancellationToken);
-
-            return result.IsSuccessful ? Ok(result.Value) : BadRequest(result.GetErrors());
+            return result.IsSuccessful ? Ok(result) : BadRequest(result);
         }
         
         [HttpDelete("delete/{id}")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteItem([FromRoute] int id, CancellationToken cancellationToken)
         {
             var result = await mediator.Send(new DeleteItemCommand(id), cancellationToken);
-            return result.IsSuccessful ? Ok(result.Value) : BadRequest(result.GetErrors());
+            return result.IsSuccessful ? Ok(result) : BadRequest(result);
         }
 
         /// QUERIES
@@ -62,23 +58,23 @@ namespace InventoryService.Controllers
         public async Task<IActionResult> GetAll([FromQuery] string? name,[FromQuery] string? sortBy, CancellationToken cancellationToken)
         {
             var result = await mediator.Send(new GetEveryItemQuery(name,sortBy),cancellationToken);
-            return result.IsSuccessful ? Ok(result.Value) : NotFound(result.GetErrors());
+            return result.IsSuccessful ? Ok(result) : NotFound(result);
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Seller")]
+       // [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> GetById([FromRoute] int id, CancellationToken cancellationToken)
         {
             var result = await mediator.Send(new GetItemQuery(id), cancellationToken);
-            return result.IsSuccessful ? Ok(result.Value) : NotFound(result.GetErrors());
+            return result.IsSuccessful ? Ok(result) : NotFound(result);
         }
 
         [HttpGet("Name/{id}")]
-        [Authorize(Roles = "Admin,Seller")]
+       // [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> GetNameById([FromRoute] int id, CancellationToken cancellationToken)
         {
             var result = await mediator.Send(new GetStockUnitItemNameQuery(id), cancellationToken);
-            return result.IsSuccessful ? Ok(result.Value) : NotFound(result.GetErrors());
+            return result.IsSuccessful ? Ok(result) : NotFound(result);
         }
 
         [HttpGet("export-items")]

@@ -6,6 +6,7 @@ using System.Text;
 
 namespace Warehouse.Shared.Common
 {
+    /// TRequest = command send to handler
     public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
     {

@@ -3,15 +3,11 @@ using AccountService.Application.Queries;
 using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
-using Warehouse.Shared.DTOs.AccountDTO;
 
 using LoginRequest = Warehouse.Shared.DTOs.AccountDTO.LoginRequest;
 using RegisterRequest = Warehouse.Shared.DTOs.AccountDTO.RegisterRequest;
 using SaveAccountEmailRequest = Warehouse.Shared.DTOs.AccountDTO.SaveAccountEmailRequest;
-
 
 namespace AccountService.Controllers
 {
@@ -33,20 +29,16 @@ namespace AccountService.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest, CancellationToken cancellationToken)
         {
             LoginCommand loginCommand = mapper.Map<LoginCommand>(loginRequest);
-
-            var result = await mediator.Send(loginCommand,cancellationToken);
-
-            return result.IsSuccessful ? Ok(result.Value) : BadRequest(result.GetErrors());
+            var result = await mediator.Send(loginCommand,cancellationToken); /// both handler and validator return result returned in handler
+            return result.IsSuccessful ? Ok(result) : BadRequest(result); /// errors could come from either validation pipeline or handler
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register( [FromBody] RegisterRequest registerRequest,CancellationToken cancellationToken)
         {
             RegisterAccountCommand registerAccountCommand = mapper.Map<RegisterAccountCommand>(registerRequest);
-
             var result = await mediator.Send(registerAccountCommand,cancellationToken);
-
-            return result.IsSuccessful ? Ok(result.Value) : BadRequest(result.GetErrors());
+            return result.IsSuccessful ? Ok(result) : BadRequest(result);
         }
 
         [HttpGet("emails")]
@@ -54,7 +46,7 @@ namespace AccountService.Controllers
         public async Task<IActionResult> GetAccountEmails(CancellationToken ct)
         {
             var result = await mediator.Send(new GetAccountEmailsQuery(),ct);
-            return result.IsSuccessful ? Ok(result.Value) : NotFound(result.GetErrors());
+            return result.IsSuccessful ? Ok(result) : NotFound(result);
         }
 
         [HttpPost("internal/save-email")]
@@ -62,7 +54,7 @@ namespace AccountService.Controllers
         {
             SaveAccountEmailCommand command = mapper.Map<SaveAccountEmailCommand>(req);
             var result = await mediator.Send(command, ct);
-            return result.IsSuccessful ? Ok() : BadRequest(result.GetErrors());
+            return result.IsSuccessful ? Ok(result) : BadRequest(result);
         }
     }
 }

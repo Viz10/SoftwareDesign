@@ -32,7 +32,7 @@ namespace InventoryService.Controllers
 
             var result = await mediator.Send(command, cancellationToken);
 
-            return result.IsSuccessful ? Ok(result.Value) : BadRequest(result.GetErrors());
+            return result.IsSuccessful ? Ok(result) : BadRequest(result);
         }
 
         [HttpPut("update-stock-unit")]
@@ -43,7 +43,7 @@ namespace InventoryService.Controllers
 
             var result = await mediator.Send(command, cancellationToken);
 
-            return result.IsSuccessful ? Ok(result.Value) : BadRequest(result.GetErrors());
+            return result.IsSuccessful ? Ok(result) : BadRequest(result);
         }
 
         [HttpDelete("delete/{id}")]
@@ -51,7 +51,7 @@ namespace InventoryService.Controllers
         public async Task<IActionResult> DeleteItem([FromRoute] int id, CancellationToken cancellationToken)
         {
             var result = await mediator.Send(new DeleteStockUnitCommand(id), cancellationToken);
-            return result.IsSuccessful ? Ok(result.Value) : BadRequest(result.GetErrors());
+            return result.IsSuccessful ? Ok(result) : BadRequest(result);
         }
 
         /// QUERIES
@@ -60,14 +60,14 @@ namespace InventoryService.Controllers
         public async Task<IActionResult> GetAll([FromQuery] string? barcode, CancellationToken cancellationToken)
         {
             var result = await mediator.Send(new GetEveryStockUnitQuery(barcode), cancellationToken);
-            return result.IsSuccessful ? Ok(result.Value) : NotFound(result.GetErrors());
+            return result.IsSuccessful ? Ok(result) : NotFound(result);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] int id, CancellationToken cancellationToken)
         {
             var result = await mediator.Send(new GetStockUnitQuery(id), cancellationToken);
-            return result.IsSuccessful ? Ok(result.Value) : NotFound(result.GetErrors());
+            return result.IsSuccessful ? Ok(result) : NotFound(result);
         }
     }
 }

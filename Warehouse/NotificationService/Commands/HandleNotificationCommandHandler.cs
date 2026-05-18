@@ -19,16 +19,15 @@ namespace NotificationService.Commands
             var e = cmd.warehouseEvent;
 
             var content = $@"
-            Email To: {e.AccountEmail}
-            Action:   {e.Action}
-            Entity:   {e.EntityType}
-            Details:  {e.Description}
+            Email To: {e.AccountEmail}\n
+            Action:   {e.Action}\n
+            Entity:   {e.EntityType}\n
+            Details:  {e.Description}\n
             Occurred: {e.OccurredAt}";
 
             var client = _httpFactory.CreateClient("AccountService");
             await client.PostAsJsonAsync("api/account/internal/save-email", new SaveAccountEmailRequest(e.AccountEmail, content), ct);
 
-            Console.WriteLine($"[NOTIFICATION SENT] to {e.AccountEmail}");
             return Unit.Value;
         }
     }

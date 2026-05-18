@@ -18,10 +18,15 @@ namespace NotificationService.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Notify([FromBody] WarehouseEvent e)
+        public async Task<IActionResult> Notify([FromBody] WarehouseEvent warehouseEvent)
         {
-            await _mediator.Send(new HandleNotificationCommand(e));
-            return Ok();
+            if (warehouseEvent.AccountEmail == null)
+            {
+                return BadRequest("Account email null");
+            }
+
+            await _mediator.Send(new HandleNotificationCommand(warehouseEvent));
+            return Ok("Sent Email");
         }
     }
 }

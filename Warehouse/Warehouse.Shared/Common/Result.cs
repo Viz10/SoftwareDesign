@@ -2,28 +2,26 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace Warehouse.Shared.Common
 {
-
     public interface IResult
     {
         bool IsSuccessful { get; }
-        public Dictionary<string, List<string>>? FieldErrors { get; } /// API related
-        public string? ErrorMsg { get; } /// system related
-        object? GetErrors();
+        public Dictionary<string, List<string>>? Errors { get; }
     }
 
     public class Result : IResult /// dont return anything
     {
 
+        [JsonPropertyName("isSuccessful")]
+        [JsonInclude]
         public bool IsSuccessful { get; protected set; }
-        public Dictionary<string, List<string>>? FieldErrors { get; protected set; }
-        public string? ErrorMsg { get; protected set; }
-
-
-        public object? GetErrors() => (FieldErrors is not null && FieldErrors.Count > 0) ? FieldErrors : ErrorMsg;
-
+        
+        [JsonPropertyName("errors")]
+        [JsonInclude]
+        public Dictionary<string, List<string>>? Errors { get; protected set; }
 
         public static Result Success()
         {
@@ -37,7 +35,7 @@ namespace Warehouse.Shared.Common
             return new Result()
             {
                 IsSuccessful = false,
-                ErrorMsg = errorMsg
+                Errors = new Dictionary<string, List<string>> { ["Error"] = new List<string> { errorMsg } }
             };
         }
         public static Result MultipleFails(List<ValidationFailure> failures)
@@ -49,19 +47,23 @@ namespace Warehouse.Shared.Common
                 g => g.Select(f => f.ErrorMessage).ToList()
             );
 
-            return new Result { IsSuccessful = false, FieldErrors = fieldErrors };
+            return new Result { IsSuccessful = false, Errors = fieldErrors };
         }
     }
             
  
     public class Result<T> : Result /// holds important return data
     {
+
+        [JsonPropertyName("value")]
+        [JsonInclude]
         public T? Value { get; private set; }
 
         public static Result<T> Success(T value)
         {
            return new Result<T>()
-           { IsSuccessful = true,
+           { 
+               IsSuccessful = true,
                Value = value 
            };
         }
@@ -70,7 +72,7 @@ namespace Warehouse.Shared.Common
             return new Result<T>()
             { 
                 IsSuccessful = false,
-                ErrorMsg = errorMsg 
+                Errors = new Dictionary<string, List<string>> { ["Error"] = new List<string> { errorMsg } }
             };
         }
         public new static Result<T> MultipleFails(List<ValidationFailure> failures)
@@ -82,7 +84,7 @@ namespace Warehouse.Shared.Common
                 g => g.Select(f => f.ErrorMessage).ToList()
             );
 
-            return new Result<T> { IsSuccessful = false, FieldErrors = fieldErrors };
+            return new Result<T> { IsSuccessful = false, Errors = fieldErrors };
         }
     }
 }

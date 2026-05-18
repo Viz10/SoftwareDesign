@@ -4,12 +4,12 @@ using System.Text;
 
 namespace Warehouse.Shared.DTOs.ItemDTO
 {
-    public class ItemGetResponse
+    public record ItemGetResponse /// init used to construct record only
     {
-        public int Id { get; set; }
-        public string Name { get; set; } = null!;
-        public decimal? ReferencePricePerItem { get; set; }
-        public string? Description { get; set; }
-        public int Quantity { get; set; }
+        public int Id { get; init; }
+        public string Name { get; init; } = null!;
+        public decimal? ReferencePricePerItem { get; init; }
+        public string? Description { get; init; }
+        public int Quantity { get; init; }
     }
 }

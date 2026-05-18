@@ -10,9 +10,9 @@ using Warehouse.Shared.DTOs.ItemDTO;
 
 namespace InventoryService.Application.Commands
 {
-    public record DeleteItemCommand(int id) : IRequest<Result<bool>>;
+    public record DeleteItemCommand(int id) : IRequest<Result>;
 
-    public class DeleteItemCommandHandler : IRequestHandler<DeleteItemCommand, Result<bool>>
+    public class DeleteItemCommandHandler : IRequestHandler<DeleteItemCommand, Result>
     {
         private readonly InventoryServiceDbContext dbContext;
         private readonly IHttpClientFactory _httpFactory;
@@ -28,7 +28,7 @@ namespace InventoryService.Application.Commands
             _user = user;
         }
 
-        public async Task<Result<bool>> Handle(DeleteItemCommand command, CancellationToken ct)
+        public async Task<Result> Handle(DeleteItemCommand command, CancellationToken ct)
         {
             try
             {
@@ -39,13 +39,13 @@ namespace InventoryService.Application.Commands
 
                 if (item == null)
                 {
-                    return Result<bool>.Fail("Not present!");
+                    return Result.Fail("Not present!");
                 }
 
                 /// Prevent deletion if StockUnits exist
                 if (item.StockUnits.Any(su => !su.IsDeleted))
                 {
-                    return Result<bool>.Fail("Cannot delete item: There are active Stock Units linked to it.");
+                    return Result.Fail("Cannot delete item: There are active Stock Units linked to it.");
                 }
 
                 var oldItemName = item.Name;
@@ -73,11 +73,11 @@ namespace InventoryService.Application.Commands
                     OccurredAt = DateTimeOffset.UtcNow
                 }, ct);
 
-                return Result<bool>.Success(true);
+                return Result.Success();
             }
             catch (Exception ex)
             {
-                return Result<bool>.Fail(ex.Message);
+                return Result.Fail(ex.Message);
             }
         }
     }

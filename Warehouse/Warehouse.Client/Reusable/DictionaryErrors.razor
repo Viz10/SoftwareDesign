@@ -2,12 +2,9 @@
 {
     foreach (var errorGroup in Errors)
     {
-        foreach (var msg in errorGroup.Value)
-        {
-            <p class="text-danger small mt-1">
-                <strong>@errorGroup.Key:</strong> @msg
-            </p>
-        }
+        <p class="text-danger small mt-1">
+            <strong>@errorGroup.Value.First()</strong> @*Display one error at a time*@
+        </p>
     }
 }
 

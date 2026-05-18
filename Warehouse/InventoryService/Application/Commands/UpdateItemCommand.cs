@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Azure.Core;
+using InventoryService.Application.DomainService;
 using InventoryService.Infrastructure.DbRepository;
 using InventoryService.Infrastructure.Entities;
 using MediatR;
@@ -16,7 +17,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace InventoryService.Application.Commands
 {
-    public record UpdateItemCommand(int Id,string Name, decimal? ReferencePricePerItem, string? Description) : IRequest<Result<ItemGetResponse>>;
+    public record UpdateItemCommand(int Id, string Name, decimal? ReferencePricePerItem, string? Description) : IRequest<Result<ItemGetResponse>>;
 
     internal class UpdateItemCommandHandler : IRequestHandler<UpdateItemCommand, Result<ItemGetResponse>>
     {
@@ -42,6 +43,7 @@ namespace InventoryService.Application.Commands
 
         public async Task<Result<ItemGetResponse>> Handle(UpdateItemCommand command, CancellationToken ct)
         {
+            /*
             try
             {
                 var result_dup = await _itemDomainService.isDuplicate(command.Name, command.Id);
@@ -80,8 +82,8 @@ namespace InventoryService.Application.Commands
             {
                 return Result<ItemGetResponse>.Fail(ex.Message);
             }
-
-
+            */
+            return null;
         }
     }
 }

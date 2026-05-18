@@ -1,4 +1,4 @@
-﻿@page "/Login"
+﻿@page "/login"
 @using Warehouse.Client.Auth
 @using Warehouse.Client.Reusable
 @using Warehouse.Shared.DTOs.AccountDTO
@@ -16,17 +16,8 @@
         <div class="col-md-4">
             <h3 class="mb-4 text-center">Login</h3>
 
-            @* Global Errors *@
-            @if (!string.IsNullOrEmpty(errorMsg))
-            {
-                <div class="alert alert-danger">@errorMsg</div>
-            }
-
-            @* Centralized Field Errors *@
-            @if (fieldErrors.Any())
-            {
-                <DictionaryErrors Errors="fieldErrors" />
-            }
+            <Alert error="@alertMsg"></Alert>
+            <DictionaryErrors Errors="fieldErrors"/>
 
             <EditForm Model="command" OnSubmit="HandleLogin">
                 <div class="form-group mb-3">
@@ -60,6 +51,7 @@
                     Go Back
                 </button>
             </EditForm>
+
         </div>
     </div>
 </div>
@@ -67,46 +59,40 @@
 @code {
     private LoginRequest command = new();
     private Dictionary<string, List<string>> fieldErrors = new();
-    private string? errorMsg;
+   
+    private string? alertMsg;
     private bool isLoading = false;
 
     private async Task HandleLogin()
     {
         isLoading = true;
-        errorMsg = null;
+        alertMsg = null;
         fieldErrors = new();
 
         try
         {
             var client = HttpFactory.CreateClient("AccountService");
             var response = await client.PostAsJsonAsync("api/account/login", command);
-            var result = await response.Content.ReadFromJsonAsync<Result<string>>();
+            var result = await response.Content.ReadFromJsonAsync<Result<Message>>();
 
             if (result is null)
             {
-                errorMsg = "Unexpected error, please try again.";
+                alertMsg = "Unexpected error, please try again.";
                 return;
             }
 
             if (!result.IsSuccessful)
             {
-                if (result.FieldErrors is not null && result.FieldErrors.Any())
-                {
-                    fieldErrors = result.FieldErrors;
-                }
-                else
-                {
-                    errorMsg = result.ErrorMsg ?? "Login failed.";
-                }
+                fieldErrors = result.Errors!;
                 return;
             }
 
-            await AuthProvider.NotifyLogin(result.Value!);
+            await AuthProvider.NotifyLogin(result.Value!.message);
             Nav.NavigateTo("/");
         }
         catch (Exception ex)
         {
-            errorMsg = $"Something went wrong: {ex.Message}";
+            alertMsg = $"Something went wrong: {ex.Message} {ex.InnerException?.Message}";
         }
         finally
         {
