@@ -1,0 +1,83 @@
+﻿@page "/chat"
+@using Microsoft.AspNetCore.SignalR.Client
+@using Blazored.LocalStorage
+
+@inject NavigationManager NavigationManager
+@inject ILocalStorageService _localStorage
+@inject IConfiguration configuration
+
+@implements IAsyncDisposable
+
+<PageTitle>Warehouse Chat</PageTitle>
+
+@if (!isConnected)
+{
+    <p>Connecting to chat..</p>
+}
+else
+{
+    <div class="chat-messages" style="height:400px; overflow-y:auto; border:1px solid #ccc; padding:8px;">
+        @foreach (var msg in messages)
+        {
+            <div style="margin-bottom:8px;">
+                <strong>@msg</strong>
+            </div>
+        }
+    </div>
+
+    <div style="margin-top:8px; display:flex; gap:8px;">
+        <InputText placeholder="type user" @bind-Value="user"></InputText>
+        <InputText placeholder="type message" @bind-Value="inputMessage"></InputText>
+        <button class="btn btn-success" type="button" @onclick=Send>Send</button>
+    </div>
+}
+
+@code {
+    private bool isConnected = false;
+
+    private HubConnection? hub;
+    private List<string> messages = new();
+
+    private string? user;
+    private string? inputMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await _localStorage.GetItemAsStringAsync("token");
+
+        hub = new HubConnectionBuilder()
+        .WithUrl(configuration["ApiSettings:NotificationService"]! + "/hubs/chat", options =>
+        {
+            options.AccessTokenProvider = () => Task.FromResult<string?>(token);  /// JWT token for [Authorize] on the Hub via SignalR query param for WebSocket connections
+                                                                                 
+        })
+        .WithAutomaticReconnect()
+        .Build();
+
+        /// registers a listener for server broadcasts
+        hub.On<string, string>("ReceiveMessage", (userInput, messageInput) =>
+        {
+            var displayMsg = $"{userInput}: {messageInput}";
+            messages.Add(displayMsg);
+            StateHasChanged();
+        });
+    
+        await hub.StartAsync(); /// opens the WebSocket connection
+        isConnected = true;
+        StateHasChanged();
+    }
+    private async Task Send()
+    {
+        if (hub is null || string.IsNullOrWhiteSpace(inputMessage))
+            return;
+
+        /// calls the "SendMessage" method on the Hub
+        await hub.SendAsync("SendMessage", user, inputMessage);
+        inputMessage = "";
+    }
+    public async ValueTask DisposeAsync()
+    {
+        if (hub is not null)
+            await hub.StopAsync();
+    }
+}
