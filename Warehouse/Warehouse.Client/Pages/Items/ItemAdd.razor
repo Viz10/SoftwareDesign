@@ -1,1 +1,103 @@
 ﻿@page "/items/add"
+
+@attribute [Authorize(Roles = "Admin, Seller")]
+
+@using Microsoft.AspNetCore.Authorization
+@using Warehouse.Client.Reusable
+@using Warehouse.Shared.DTOs.ItemDTO
+@using Warehouse.Shared.Common
+
+@inject NavigationManager Nav
+@inject IHttpClientFactory HttpFactory
+
+<PageTitle>Add Item</PageTitle>
+
+<Alert error="@error" succes="@success"></Alert>
+<DictionaryErrors Errors="fieldErrors" />
+
+<EditForm OnSubmit="Add" Model="addItemRequest">
+
+    <div class="form-group">
+        <label for="Name">Name</label>
+        <InputText id="Name" @bind-Value="addItemRequest.Name" class="form-control"></InputText>
+    </div>
+    <br/>
+    <div class="form-group">
+        <label for="PricePerItem">Price Per Item</label>
+        <InputNumber id="PricePerItem" step="0.1" @bind-Value="addItemRequest.ReferencePricePerItem" class="form-control"></InputNumber>
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="Description">Description</label>
+        <InputTextArea id="Description" @bind-Value="addItemRequest.Description" class="form-control"></InputTextArea>
+    </div>
+    <br />
+
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
+    }
+    else
+    {
+        <button type="submit" class="btn btn-primary w-100 mb-2">Add</button>
+        <button type="button" class="btn btn-outline-secondary w-100" @onclick='()=>Nav.NavigateTo("/Items")'>Go Back</button>
+    }
+
+</EditForm>
+
+
+@code {
+    private bool isLoading = false;
+    private string? error=null;
+    private string? success=null;
+
+    public AddItemRequest addItemRequest = new AddItemRequest();
+    private Dictionary<string, List<string>> fieldErrors = new();
+
+    private HttpClient httpClient { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        httpClient = HttpFactory.CreateClient("InventoryService");
+    }
+
+    public async Task Add()
+    {
+        isLoading = true;
+        fieldErrors = new();
+        error = null;
+        success = null;
+
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("api/item/add-item", addItemRequest);
+            var result = await response.Content.ReadFromJsonAsync<Result<MessageResponse>>();
+
+            if (result is null)
+            {
+                error = "Unexpected error, please try again.";
+                return;
+            }
+
+            if (!result.IsSuccessful)
+            {
+                fieldErrors = result.Errors!;
+                return;
+            }
+
+            addItemRequest = new();
+            success = result.Value!.Message;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            error = $"{ex.Message} {ex.InnerException?.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

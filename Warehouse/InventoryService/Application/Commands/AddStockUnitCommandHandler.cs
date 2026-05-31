@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+﻿
 using InventoryService.Infrastructure.DbRepository;
 using InventoryService.Infrastructure.Entities;
 using MediatR;
@@ -7,17 +7,12 @@ using Warehouse.Shared.Common;
 
 namespace InventoryService.Application.Commands
 {
+    internal record AddStockUnitCommand(int ItemId, decimal? CurrentPrice, string? Note, int Quantity) : IRequest<Result<string>>;
 
-    public record AddStockUnitCommand(int ItemId, decimal? CurrentPrice, string? Note, int Quantity) : IRequest<Result<string>>;
 
-    internal class AddStockUnitCommandHandler : IRequestHandler<AddStockUnitCommand, Result<string>>
+    internal class AddStockUnitCommandHandler(InventoryServiceDbContext _dbContext) : IRequestHandler<AddStockUnitCommand, Result<string>>
     {
-        private readonly InventoryServiceDbContext dbContext;
-
-        public AddStockUnitCommandHandler(InventoryServiceDbContext _dbContext)
-        {
-            dbContext = _dbContext;
-        }
+        private readonly InventoryServiceDbContext dbContext = _dbContext;
 
         public async Task<Result<string>> Handle(AddStockUnitCommand command, CancellationToken ct)
         {
@@ -43,11 +38,10 @@ namespace InventoryService.Application.Commands
                 await dbContext.StockUnits.AddRangeAsync(unitlocalUnits,ct);
 
                 //// UPDATE STOCK QUANTITY
-                int rowsAffected = await dbContext.Stocks.Where(s => s.ItemId == command.ItemId).ExecuteUpdateAsync(
-                    setter => setter
+                int rowsAffected = await dbContext.Stocks.Where(s => s.ItemId == command.ItemId).ExecuteUpdateAsync(setter => setter
                     .SetProperty(p => p.Quantity, p => p.Quantity + command.Quantity)
                     .SetProperty(p => p.LastModifiedTime, DateTimeOffset.UtcNow)
-                );
+                    , cancellationToken: ct);
 
                 //// ADD NEW
                 if (rowsAffected == 0)

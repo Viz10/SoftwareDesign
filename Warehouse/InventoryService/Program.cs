@@ -1,13 +1,15 @@
+using FluentValidation;
+using InventoryService.Application.DomainService;
 using InventoryService.Application.Mappings;
 using InventoryService.Infrastructure.DbRepository;
-using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using System.Reflection;
-using Warehouse.Shared.Common;
 using Warehouse.Shared.Auth;
-using InventoryService.Application.DomainService;
+using Warehouse.Shared.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,22 +28,28 @@ builder.Services.AddAutoMapper(cfg =>
 });
 
 builder.Services.AddSharedJwtAuth(builder.Configuration);
+builder.Services.AddTransient<AuthTokenHandler>();
+
 builder.Services.AddScoped<ItemDomainService>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
 
-builder.Services.AddHttpClient("NotificationService",c => c.BaseAddress = new Uri("https://localhost:7222"));
+builder.Services.AddHttpClient("NotificationService",c => c.BaseAddress = new Uri(builder.Configuration["NotificationServiceURL"]!))
+    .AddHttpMessageHandler<AuthTokenHandler>();
 
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddControllers(options =>
+{
+    var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+    options.Filters.Add(new AuthorizeFilter(policy));
+});
 builder.Services.AddOpenApi();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazor", policy =>
     {
-        policy.WithOrigins("https://localhost:7061")
+        policy.WithOrigins(builder.Configuration["BlazorURL"]!)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -61,7 +69,6 @@ app.UseHttpsRedirection();
 app.UseCors("AllowBlazor");
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.MapControllers();

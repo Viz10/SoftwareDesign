@@ -28,7 +28,6 @@ namespace InventoryService.Application.Export
 
                 return sb.ToString();
             });
-
         }
     }
 }

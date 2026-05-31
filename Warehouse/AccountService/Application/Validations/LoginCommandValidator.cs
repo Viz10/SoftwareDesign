@@ -1,7 +1,5 @@
 ﻿using AccountService.Application.Commands;
 using FluentValidation;
-using MediatR;
-using Warehouse.Shared.Common;
 
 namespace AccountService.Application.Validations
 {

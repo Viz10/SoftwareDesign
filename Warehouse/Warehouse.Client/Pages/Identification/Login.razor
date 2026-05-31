@@ -1,4 +1,5 @@
 ﻿@page "/login"
+
 @using Warehouse.Client.Auth
 @using Warehouse.Client.Reusable
 @using Warehouse.Shared.DTOs.AccountDTO
@@ -14,18 +15,17 @@
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-4">
-            <h3 class="mb-4 text-center">Login</h3>
 
             <Alert error="@alertMsg"></Alert>
             <DictionaryErrors Errors="fieldErrors"/>
 
-            <EditForm Model="command" OnSubmit="HandleLogin">
+            <EditForm Model="DTO" OnSubmit="HandleLogin">
                 <div class="form-group mb-3">
                     <label for="Email">Email</label>
                     <InputText id="Email" 
                                type="email" 
                                class="form-control" 
-                               @bind-Value="command.Email" />
+                               @bind-Value="DTO.Email" />
                 </div>
 
                 <div class="form-group mb-3">
@@ -33,23 +33,22 @@
                     <InputText id="Password" 
                                type="password" 
                                class="form-control" 
-                               @bind-Value="command.Password" />
+                               @bind-Value="DTO.Password" />
                 </div>
 
                 <hr />
 
-                <button type="submit" class="btn btn-primary w-100" disabled="@isLoading">
-                    @if (isLoading)
-                    {
-                        <span class="spinner-border spinner-border-sm me-2" />
-                    }
-                    Login
-                </button>
-
-                <button type="button" class="btn btn-outline-secondary w-100 mt-2"
-                        @onclick='() => Nav.NavigateTo("/")'>
-                    Go Back
-                </button>
+                @if (isLoading)
+                {
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                }
+                else
+                {
+                    <button type="submit" class="btn btn-primary w-100 mb-2">Login</button>
+                    <button type="button" class="btn btn-outline-secondary w-100" @onclick='() => Nav.NavigateTo("/")'>Go Back</button>
+                }
             </EditForm>
 
         </div>
@@ -57,11 +56,18 @@
 </div>
 
 @code {
-    private LoginRequest command = new();
+    private LoginRequest DTO = new();
     private Dictionary<string, List<string>> fieldErrors = new();
    
     private string? alertMsg;
     private bool isLoading = false;
+
+    private HttpClient httpClient { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        httpClient = HttpFactory.CreateClient("AccountService");
+    }
 
     private async Task HandleLogin()
     {
@@ -71,9 +77,8 @@
 
         try
         {
-            var client = HttpFactory.CreateClient("AccountService");
-            var response = await client.PostAsJsonAsync("api/account/login", command);
-            var result = await response.Content.ReadFromJsonAsync<Result<Message>>();
+            var response = await httpClient.PostAsJsonAsync("api/account/login", DTO);
+            var result = await response.Content.ReadFromJsonAsync<Result<MessageResponse>>();
 
             if (result is null)
             {
@@ -87,12 +92,13 @@
                 return;
             }
 
-            await AuthProvider.NotifyLogin(result.Value!.message);
-            Nav.NavigateTo("/");
+            await AuthProvider.NotifyLogin(result.Value!.Message); /// save jwt in local storage , notify UI 
+            Nav.NavigateTo("/items"); /// redirect
         }
         catch (Exception ex)
         {
-            alertMsg = $"Something went wrong: {ex.Message} {ex.InnerException?.Message}";
+            Console.WriteLine(ex.Message);
+            alertMsg = "Something went wrong";
         }
         finally
         {

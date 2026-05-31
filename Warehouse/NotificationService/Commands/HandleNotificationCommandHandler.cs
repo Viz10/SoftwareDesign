@@ -4,25 +4,22 @@ using Warehouse.Shared.DTOs.AccountDTO;
 
 namespace NotificationService.Commands
 {
-    public record HandleNotificationCommand(WarehouseEvent warehouseEvent) : IRequest<Unit>;
+    internal record HandleNotificationCommand(WarehouseEvent WarehouseEvent) : IRequest<Unit>;
 
-    public class HandleNotificationCommandHandler: IRequestHandler<HandleNotificationCommand, Unit>
+
+    internal class HandleNotificationCommandHandler(IHttpClientFactory httpFactory) : IRequestHandler<HandleNotificationCommand, Unit>
     {
-        private readonly IHttpClientFactory _httpFactory;
+        private readonly IHttpClientFactory _httpFactory = httpFactory;
 
-        public HandleNotificationCommandHandler(IHttpClientFactory httpFactory)
-        {
-            _httpFactory = httpFactory;
-        }
         public async Task<Unit> Handle(HandleNotificationCommand cmd, CancellationToken ct)
         {
-            var e = cmd.warehouseEvent;
+            var e = cmd.WarehouseEvent;
 
-            var content = $@"
-            Email To: {e.AccountEmail}\n
-            Action:   {e.Action}\n
-            Entity:   {e.EntityType}\n
-            Details:  {e.Description}\n
+            var content =
+         $@"Email To: {e.AccountEmail}
+            Action:   {e.Action}
+            Entity:   {e.EntityType}
+            Details:  {e.Description}
             Occurred: {e.OccurredAt}";
 
             var client = _httpFactory.CreateClient("AccountService");

@@ -1,5 +1,5 @@
 ﻿using MediatR;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NotificationService.Commands;
 using Warehouse.Shared.Common;
@@ -8,16 +8,12 @@ namespace NotificationService.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class NotifyController : ControllerBase
+    public class NotifyController(IMediator mediator) : ControllerBase
     {
-        private readonly IMediator _mediator;
-
-        public NotifyController(IMediator mediator)
-        {
-            _mediator = mediator;
-        }
+        private readonly IMediator _mediator = mediator;
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> Notify([FromBody] WarehouseEvent warehouseEvent)
         {
             if (warehouseEvent.AccountEmail == null)

@@ -10,9 +10,11 @@ namespace AccountService.Application.Mappings
         public AccountMappingProfile()
         {
             CreateMap<SaveAccountEmailRequest, SaveAccountEmailCommand>();
-            CreateMap<Account, User>();
             CreateMap<RegisterRequest, RegisterAccountCommand>();
             CreateMap<LoginRequest, LoginCommand>();
+
+            CreateMap<Account, User>();
+ 
             CreateMap<RegisterAccountCommand, Account>().ForMember(dest => dest.PasswordHashed, opt => opt.Ignore());
         }
     }

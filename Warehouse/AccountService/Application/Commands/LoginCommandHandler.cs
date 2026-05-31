@@ -1,8 +1,6 @@
 ﻿using AccountService.Infrastructure.DbRepository;
 using AutoMapper;
 using MediatR;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -13,24 +11,19 @@ using Warehouse.Shared.DTOs.AccountDTO;
 
 namespace AccountService.Application.Commands
 {
-    public record LoginCommand(
-        string Email,
-        string Password) : IRequest<Result<Message>>;
+    internal record LoginCommand(string Email,string Password) : IRequest<Result<MessageResponse>>;
 
-    internal class LoginCommandHandler : IRequestHandler<LoginCommand, Result<Message>>
+
+    internal class LoginCommandHandler(
+        AccountServiceDbContext _dbContext,
+        IMapper _mapper,
+        IConfiguration _configuration) : IRequestHandler<LoginCommand, Result<MessageResponse>>
     {
-        private readonly AccountServiceDbContext dbContext;
-        private readonly IMapper mapper;
-        private readonly IConfiguration configuration;
+        private readonly AccountServiceDbContext dbContext = _dbContext;
+        private readonly IMapper mapper = _mapper;
+        private readonly IConfiguration configuration = _configuration;
 
-        public LoginCommandHandler(AccountServiceDbContext _dbContext, IMapper _mapper, IConfiguration _configuration)
-        {
-            dbContext = _dbContext;
-            mapper = _mapper;
-            configuration = _configuration;
-        }
-
-        public async Task<Result<Message>> Handle(LoginCommand request, CancellationToken ct)
+        public async Task<Result<MessageResponse>> Handle(LoginCommand request, CancellationToken ct)
         {
             try
             { 
@@ -39,26 +32,25 @@ namespace AccountService.Application.Commands
                .FirstOrDefaultAsync(ct);
 
                 if (account is null || !BCrypt.Net.BCrypt.Verify(request.Password, account.PasswordHashed))
-                    return Result<Message>.Fail("Account does not exist or invalid email");
+                    return Result<MessageResponse>.Fail("Account does not exist or invalid email");
 
                 var user = mapper.Map<User>(account);
-
                 var token = CreateToken(user);
 
-                return Result<Message>.Success(Message.CreateMessage(token));
+                return Result<MessageResponse>.Success(MessageResponse.CreateMessage(token));
             }
             catch (Exception ex)
             {
-                return Result<Message>.Fail(ex.Message);
+                return Result<MessageResponse>.Fail(ex.Message);
             }
         }
         private string CreateToken(User user)
         {
             var claims = new List<Claim>()
             {
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.NameIdentifier,user.Id.ToString()),
-                new Claim(ClaimTypes.Role,user.AccountType.ToString())
+                new(ClaimTypes.Email, user.Email),
+                new(ClaimTypes.NameIdentifier,user.Id.ToString()),
+                new(ClaimTypes.Role,user.AccountType.ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["CreateJWT:Token"]!));

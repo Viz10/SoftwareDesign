@@ -10,6 +10,8 @@ namespace Warehouse.Shared.Auth
     {
         public static IServiceCollection AddSharedJwtAuth(this IServiceCollection services, IConfiguration configuration)
         {
+
+            // 1. Configures the JWT validation rules , parse and fill in claims
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
@@ -25,6 +27,7 @@ namespace Warehouse.Shared.Auth
                     };
                 });
 
+            // 2. Registers the authorization engine
             services.AddAuthorization();
             return services;
         }

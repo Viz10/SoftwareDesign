@@ -1,1 +1,145 @@
 ﻿@page "/items/edit/{Id:int}"
+
+@attribute [Authorize(Roles = "Admin, Seller")]
+
+@using Microsoft.AspNetCore.Authorization
+@using Warehouse.Client.Reusable
+@using Warehouse.Shared.DTOs.ItemDTO
+@using Warehouse.Shared.Common
+
+@inject NavigationManager Nav
+@inject IHttpClientFactory HttpFactory
+@inject NavigationManager Nav
+
+
+<PageTitle>Edit Item</PageTitle>
+
+<Alert error="@error" succes="@succes"></Alert>
+<DictionaryErrors Errors="fieldErrors" />
+
+<EditForm OnSubmit="Edit" Model="updateItemRequest">
+
+    <div class="form-group">
+        <label for="Name">Name</label>
+        <InputText id="Name" @bind-Value="updateItemRequest.Name" class="form-control"></InputText>
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="PricePerItem">Price Per Item</label>
+        <InputNumber id="PricePerItem" step="0.1" @bind-Value="updateItemRequest.ReferencePricePerItem" class="form-control"></InputNumber>
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="Description">Description</label>
+        <InputTextArea id="Description" @bind-Value="updateItemRequest.Description" class="form-control"></InputTextArea>
+    </div>
+    <br />
+
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
+    }
+    else
+    {
+        <button type="submit" class="btn btn-primary w-100 mb-2">Edit</button>
+        <button type="button" class="btn btn-outline-secondary w-100" @onclick='() => Nav.NavigateTo("/Items")'>Go Back</button>
+    }
+
+</EditForm>
+
+
+@code {
+    [Parameter] public int Id { get; set; }
+    public UpdateItemRequest updateItemRequest = new UpdateItemRequest();
+    public bool isLoading = false;
+
+    private string? error = null;
+    private string? succes = null;
+
+    private Dictionary<string, List<string>> fieldErrors = new();
+    private HttpClient httpClient { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        httpClient = HttpFactory.CreateClient("InventoryService");
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        fieldErrors = new();
+        isLoading = true;
+        error = null;
+        succes = null;
+
+        try
+        {
+            var response = await httpClient.GetAsync($"api/item/{Id}");
+            var result = await response.Content.ReadFromJsonAsync<Result<ItemGetResponse>>();
+
+            if (result is null)
+            {
+                error = "Unexpected error, please try again.";
+                return;
+            }
+
+            if (!result.IsSuccessful)
+            {
+                fieldErrors = result.Errors!;
+                return;
+            }
+
+            updateItemRequest.Id = result.Value!.Id;
+            updateItemRequest.Name = result.Value!.Name;
+            updateItemRequest.ReferencePricePerItem = result.Value.ReferencePricePerItem;
+            updateItemRequest.Description = result.Value.Description;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            error = $"{ex.Message} {ex.InnerException?.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    public async Task Edit()
+    {
+        isLoading = true;
+        error = null;
+        succes = null;
+        fieldErrors = new();
+
+        try
+        {
+            var response = await httpClient.PutAsJsonAsync("api/item/update-item", updateItemRequest);
+            var result = await response.Content.ReadFromJsonAsync<Result<UpdateItemRequest>>();
+
+            if (result is null)
+            {
+                error = "Unexpected error, please try again.";
+                return;
+            }
+
+            if (!result.IsSuccessful)
+            {
+                fieldErrors = result.Errors!;
+                return;
+            }
+
+            updateItemRequest = result.Value!; /// refresh page
+            succes = "Successfully updated item!";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            error = $"{ex.Message} {ex.InnerException?.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

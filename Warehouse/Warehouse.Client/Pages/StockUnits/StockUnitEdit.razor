@@ -1,2 +1,151 @@
-﻿@page "/StockUnits/{ItemId:int}/Edit/{Id:int}"
+﻿@page "/stockUnits/{ItemId:int}/edit/{Id:int}"
+
+@attribute [Authorize(Roles = "Admin, Seller")]
+
+@using Microsoft.AspNetCore.Authorization
+@using Warehouse.Client.Reusable
+@using Warehouse.Shared.DTOs.StockUnitDTO
+@using Warehouse.Shared.Common
+
+@inject NavigationManager Nav
+@inject IHttpClientFactory HttpFactory
+
+<PageTitle>Edit Stock Unit</PageTitle>
+
+<Alert error="@error" succes="@succes"></Alert>
+<DictionaryErrors Errors="fieldErrors" />
+
+<EditForm OnSubmit="Edit" Model="updateStockUnitRequest">
+
+    <div class="form-group">
+        <label for="CurrentPrice">Current Price</label>
+        <InputNumber id="CurrentPrice" step="0.1" @bind-Value="updateStockUnitRequest.CurrentPrice" class="form-control"></InputNumber>
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="Note">Note</label>
+        <InputTextArea id="Note" @bind-Value="updateStockUnitRequest.Note" class="form-control"></InputTextArea>
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="Status">Status</label>
+        <InputSelect id="Status" @bind-Value="updateStockUnitRequest.Status" class="form-control">
+            @foreach (var status in Enum.GetValues<Warehouse.Shared.Enums.UnitStatus>())
+            {
+                <option value="@status">@status</option>
+            }
+        </InputSelect>
+    </div>
+    <br />
+
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
+    }
+    else
+    {
+        <button type="submit" class="btn btn-primary w-100 mb-2">Edit</button>
+        <button type="button" class="btn btn-outline-secondary w-100" @onclick='() => Nav.NavigateTo($"/stockUnits/{ItemId}")'>Go Back</button>
+    }
+
+</EditForm>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [Parameter] public int ItemId { get; set; }
+
+    public UpdateStockUnitRequest updateStockUnitRequest = new UpdateStockUnitRequest();
+    public bool isLoading = false;
+
+    private string? error = null;
+    private string? succes = null;
+
+    private Dictionary<string, List<string>> fieldErrors = new();
+    private HttpClient httpClient { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        httpClient = HttpFactory.CreateClient("InventoryService");
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        fieldErrors = new();
+        isLoading = true;
+        error = null;
+        succes = null;
+
+        try
+        {
+            var response = await httpClient.GetAsync($"api/stockunit/{Id}");
+            var result = await response.Content.ReadFromJsonAsync<Result<StockUnitGetResponse>>();
+
+            if (result is null)
+            {
+                error = "Unexpected error, please try again.";
+                return;
+            }
+
+            if (!result.IsSuccessful)
+            {
+                fieldErrors = result.Errors!;
+                return;
+            }
+
+            updateStockUnitRequest.Id = Id;
+            updateStockUnitRequest.ItemId = ItemId;
+            updateStockUnitRequest.CurrentPrice = result.Value!.CurrentPrice;
+            updateStockUnitRequest.Note = result.Value!.Note;
+            updateStockUnitRequest.Status = result.Value!.Status;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            error = $"{ex.Message} {ex.InnerException?.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+    
+    public async Task Edit()
+    {
+        isLoading = true;
+        error = null;
+        succes = null;
+        fieldErrors = new();
+
+        try
+        {
+            var response = await httpClient.PutAsJsonAsync("api/stockunit/update-stock-unit", updateStockUnitRequest);
+            var result = await response.Content.ReadFromJsonAsync<Result<UpdateStockUnitRequest>>();
+
+            if (result is null)
+            {
+                error = "Unexpected error, please try again.";
+                return;
+            }
+
+            if (!result.IsSuccessful)
+            {
+                fieldErrors = result.Errors!;
+                return;
+            }
+
+            updateStockUnitRequest = result.Value!; /// refresh page
+            succes = "Successfully updated product!";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            error = $"{ex.Message} {ex.InnerException?.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
 

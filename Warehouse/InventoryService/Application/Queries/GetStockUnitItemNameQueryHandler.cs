@@ -1,37 +1,31 @@
-﻿using AutoMapper;
-using Azure.Core;
-using InventoryService.Infrastructure.DbRepository;
+﻿using InventoryService.Infrastructure.DbRepository;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Warehouse.Shared.Common;
-using Warehouse.Shared.DTOs.StockUnitDTO;
+
 
 namespace InventoryService.Application.Queries
 {
 
-    public record GetStockUnitItemNameQuery(int id) : IRequest<Result<string>>;
+    internal record GetStockUnitItemNameQuery(int Id) : IRequest<Result<string>>;
 
-    public class GetStockUnitItemNameQueryHandler : IRequestHandler<GetStockUnitItemNameQuery, Result<string>>
+
+    internal class GetStockUnitItemNameQueryHandler(InventoryServiceDbContext _dbContext) : IRequestHandler<GetStockUnitItemNameQuery, Result<string>>
     {
 
-        private readonly InventoryServiceDbContext dbContext;
-
-        public GetStockUnitItemNameQueryHandler(InventoryServiceDbContext _dbContext)
-        {
-            dbContext = _dbContext;
-        }
+        private readonly InventoryServiceDbContext dbContext = _dbContext;
 
         public async Task<Result<string>> Handle(GetStockUnitItemNameQuery request, CancellationToken ct)
         {
             try
             {
                 var name = await dbContext.Items
-                .Where(i => i.Id == request.id)
+                .Where(i => i.Id == request.Id)
                 .Select(i => i.Name).FirstOrDefaultAsync(ct);
 
-                return name != null
-                    ? Result<string>.Success(name)
-                    : Result<string>.Fail("Item name not found");
+                return name is null
+                    ? Result<string>.Fail("Item name not found") 
+                    : Result<string>.Success(name);
             }
             catch (Exception ex)
             {
@@ -39,5 +33,4 @@ namespace InventoryService.Application.Queries
             }
         }
     }
-
 }

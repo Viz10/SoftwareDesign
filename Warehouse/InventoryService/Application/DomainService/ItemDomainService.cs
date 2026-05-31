@@ -1,16 +1,15 @@
 ﻿using AutoMapper;
 using InventoryService.Application.Commands;
 using InventoryService.Infrastructure.DbRepository;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Warehouse.Shared.Common;
 
 namespace InventoryService.Application.DomainService
 {
-    public class ItemDomainService(InventoryServiceDbContext dbContext,IMapper mapper)
+    internal class ItemDomainService(InventoryServiceDbContext dbContext,IMapper mapper)
     {
         /// Check items for duplicate when adding/editing
-        public async Task<Result> isDuplicate(string name, int? editItemId)
+        public async Task<Result> IsDuplicate(string name, int? editItemId)
         {
             try
             {
@@ -57,8 +56,7 @@ namespace InventoryService.Application.DomainService
                     var stock = await dbContext.Stocks.IgnoreQueryFilters()
                         .FirstOrDefaultAsync(s => s.ItemId == deletedItem.Id);
 
-                    if (stock != null)
-                        stock.IsDeleted = false;
+                    stock?.IsDeleted = false; /// if stock is not null , set deleted to false
                     
                     return Result<bool>.Success(true); /// restored
                 }
@@ -86,8 +84,7 @@ namespace InventoryService.Application.DomainService
                     var stock = await dbContext.Stocks.IgnoreQueryFilters()
                         .FirstOrDefaultAsync(s => s.ItemId == deletedItem.Id);
 
-                    if (stock != null)
-                        stock.IsDeleted = false;
+                    stock?.IsDeleted = false;
 
                     return Result<bool>.Success(true);
                 }

@@ -1,28 +1,23 @@
 ﻿using InventoryService.Infrastructure.DbRepository;
-using InventoryService.Infrastructure.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Warehouse.Shared.Common;
 
 namespace InventoryService.Application.Commands
 {
-    public record DeleteStockUnitCommand(int id) : IRequest<Result<bool>>;
+    internal record DeleteStockUnitCommand(int Id) : IRequest<Result<bool>>;
 
-    public class DeleteStockUnitCommandHandler : IRequestHandler<DeleteStockUnitCommand, Result<bool>>
+
+    internal class DeleteStockUnitCommandHandler(InventoryServiceDbContext context) : IRequestHandler<DeleteStockUnitCommand, Result<bool>>
     {
-        private readonly InventoryServiceDbContext dbContext;
-
-        public DeleteStockUnitCommandHandler(InventoryServiceDbContext context)
-        {
-            dbContext = context;
-        }
+        private readonly InventoryServiceDbContext dbContext = context;
 
         public async Task<Result<bool>> Handle(DeleteStockUnitCommand command, CancellationToken ct)
         {
             await using var transaction = await dbContext.Database.BeginTransactionAsync(ct);
             try
             {
-                var item = await dbContext.StockUnits.FindAsync(command.id);
+                var item = await dbContext.StockUnits.FindAsync(command.Id);
 
                 if (item is null)
                 {
@@ -39,9 +34,9 @@ namespace InventoryService.Application.Commands
                     .ExecuteUpdateAsync(setter => setter
                         .SetProperty(p => p.Quantity, p => p.Quantity - 1)
                         .SetProperty(p => p.LastModifiedTime, DateTimeOffset.UtcNow)
-                    );
+                    , cancellationToken: ct);
 
-                if (rowsAffected == 0) return Result<bool>.Fail("Stock summary record does not exist!");
+                if (rowsAffected == 0) return Result<bool>.Fail("Error : stock summary record does not exist!");
                 
                 await dbContext.SaveChangesAsync(ct);
                 await transaction.CommitAsync(ct);
@@ -55,5 +50,4 @@ namespace InventoryService.Application.Commands
             }
         }
     }
-
 }

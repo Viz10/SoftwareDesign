@@ -11,5 +11,4 @@ namespace Warehouse.Client.Models
         public string AddPagePath { get; set; } = null!; /// redirect to add page
         public List<(string ButtonLabel, EventCallback<int> Action)>? ExtraActions { get; set; } /// set of optional buttons with custom action
     }
-
 }

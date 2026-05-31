@@ -4,25 +4,19 @@ using InventoryService.Infrastructure.DbRepository;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Warehouse.Shared.Common;
-using Warehouse.Shared.DTOs.ItemDTO;
 using Warehouse.Shared.DTOs.StockUnitDTO;
 
 namespace InventoryService.Application.Queries
 {
 
-    public record GetEveryStockUnitQuery(string? barCode) : IRequest<Result<List<StockUnitGetResponse>>>;
+    internal record GetEveryStockUnitQuery(int ItemId,string? BarCode) : IRequest<Result<List<StockUnitGetResponse>>>;
 
-    public class GetEveryStockUnitQueryHandler : IRequestHandler<GetEveryStockUnitQuery, Result<List<StockUnitGetResponse>>>
+
+    internal class GetEveryStockUnitQueryHandler(InventoryServiceDbContext _dbContext, IMapper _mapper) : IRequestHandler<GetEveryStockUnitQuery, Result<List<StockUnitGetResponse>>>
     {
 
-        private readonly InventoryServiceDbContext dbContext;
-        private readonly IMapper mapper;
-
-        public GetEveryStockUnitQueryHandler(InventoryServiceDbContext _dbContext, IMapper _mapper)
-        {
-            dbContext = _dbContext;
-            mapper = _mapper;
-        }
+        private readonly InventoryServiceDbContext dbContext = _dbContext;
+        private readonly IMapper mapper = _mapper;
 
         public async Task<Result<List<StockUnitGetResponse>>> Handle(GetEveryStockUnitQuery get_query, CancellationToken cancellationToken)
         {
@@ -30,9 +24,11 @@ namespace InventoryService.Application.Queries
             {
                 var dbQuery = dbContext.StockUnits.AsNoTracking().AsQueryable();
 
-                if (!string.IsNullOrWhiteSpace(get_query.barCode))
+                dbQuery = dbQuery.Where(su => su.ItemId == get_query.ItemId);
+
+                if (!string.IsNullOrWhiteSpace(get_query.BarCode))
                 {
-                    dbQuery = dbQuery.Where(item => item.SerialNumber.ToLower().Equals(get_query.barCode.ToLower()));
+                    dbQuery = dbQuery.Where(su => su.SerialNumber.ToLower().Equals(get_query.BarCode.ToLower()));
                 }
 
                 var result = await dbQuery
@@ -45,7 +41,6 @@ namespace InventoryService.Application.Queries
             {
                 return Result<List<StockUnitGetResponse>>.Fail(ex.Message);
             }
-
         }
     }
 }

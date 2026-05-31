@@ -1,18 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
 using System.Security.Claims;
-using System.Text;
 
 namespace Warehouse.Shared.Auth
 {
-    public class CurrentUser
+    public class CurrentUser(IHttpContextAccessor _accessor)
     {
-        private readonly IHttpContextAccessor accessor;
-        public CurrentUser(IHttpContextAccessor _accessor)
-        {
-            accessor = _accessor;
-        }
+        private readonly IHttpContextAccessor accessor = _accessor;
 
         public int Id => int.Parse(accessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         public string Email => accessor.HttpContext!.User.FindFirstValue(ClaimTypes.Email)!;

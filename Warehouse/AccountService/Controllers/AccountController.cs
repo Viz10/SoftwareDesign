@@ -11,30 +11,27 @@ using SaveAccountEmailRequest = Warehouse.Shared.DTOs.AccountDTO.SaveAccountEmai
 
 namespace AccountService.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountController : ControllerBase
+    public class AccountController(IMediator _mediator, IMapper _mapper) : ControllerBase
     {
 
-        private readonly IMediator mediator;
-        private readonly IMapper mapper;
-
-        public AccountController(IMediator _mediator, IMapper _mapper)
-        {
-            mediator = _mediator;
-            mapper = _mapper;
-        }
+        private readonly IMediator mediator = _mediator;
+        private readonly IMapper mapper = _mapper;
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest, CancellationToken cancellationToken)
         {
             LoginCommand loginCommand = mapper.Map<LoginCommand>(loginRequest);
-            var result = await mediator.Send(loginCommand,cancellationToken); /// both handler and validator return result returned in handler
+            var result = await mediator.Send(loginCommand,cancellationToken); /// both handler and validator return Result
             return result.IsSuccessful ? Ok(result) : BadRequest(result); /// errors could come from either validation pipeline or handler
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register( [FromBody] RegisterRequest registerRequest,CancellationToken cancellationToken)
+        [AllowAnonymous]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest,CancellationToken cancellationToken)
         {
             RegisterAccountCommand registerAccountCommand = mapper.Map<RegisterAccountCommand>(registerRequest);
             var result = await mediator.Send(registerAccountCommand,cancellationToken);
@@ -50,6 +47,7 @@ namespace AccountService.Controllers
         }
 
         [HttpPost("internal/save-email")]
+        [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> SaveEmail([FromBody] SaveAccountEmailRequest req,CancellationToken ct)
         {
             SaveAccountEmailCommand command = mapper.Map<SaveAccountEmailCommand>(req);

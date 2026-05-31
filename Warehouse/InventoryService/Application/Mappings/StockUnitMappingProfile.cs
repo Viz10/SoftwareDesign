@@ -17,9 +17,9 @@ namespace InventoryService.Application.Mappings
             CreateMap<UpdateStockUnitRequest, UpdateStockUnitCommand>(); /// api conversions
 
             CreateMap<AddStockUnitCommand, StockUnit>();  /// service mapping       
-            CreateMap<UpdateStockUnitCommand, StockUnit>();   /// service mapping       
-            CreateMap<StockUnitGetResponse, UpdateStockUnitRequest>(); /// refresh edit form 
+            CreateMap<UpdateStockUnitCommand, StockUnit>();
+
+            CreateMap<StockUnit, UpdateStockUnitRequest>(); /// refresh ui 
         }
     }
-
 }

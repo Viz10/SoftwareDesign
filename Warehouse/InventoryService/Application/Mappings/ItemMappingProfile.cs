@@ -10,16 +10,16 @@ namespace InventoryService.Application.Mappings
         public ItemMappingProfile()
         {
             CreateMap<Item, ItemGetResponse>()
-            .ForMember(dest => dest.Quantity,  opt => opt.MapFrom(src => src.Stock != null ? src.Stock.Quantity : 0));
+            .ForMember(dest => dest.Quantity,  opt => opt.MapFrom(src => (src.Stock != null) ? src.Stock.Quantity : 0));
             /// Ensures that if Stock is null, Quantity defaults to 0
 
             CreateMap<AddItemRequest, AddItemCommand>();
             CreateMap<UpdateItemRequest, UpdateItemCommand>(); /// api conversions
 
-            CreateMap<AddItemCommand, Item>();  /// service mapping       
-            CreateMap<UpdateItemCommand, Item>();   /// service mapping       
-            CreateMap<ItemGetResponse, UpdateItemRequest>(); /// refresh edit form        
+            CreateMap<AddItemCommand, Item>();  /// service mapping            
+            CreateMap<UpdateItemCommand, Item>();    
+            
+            CreateMap<Item, UpdateItemRequest>();/// refresh ui   
         }
     }
-
 }

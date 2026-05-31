@@ -1,1 +1,105 @@
-﻿
+﻿@page "/stockUnits/add/{ItemId:int}"
+
+@attribute [Authorize(Roles = "Admin, Seller")]
+
+@using Microsoft.AspNetCore.Authorization
+@using Warehouse.Client.Reusable
+@using Warehouse.Shared.DTOs.StockUnitDTO
+@using Warehouse.Shared.Common
+
+@inject NavigationManager Nav
+@inject IHttpClientFactory HttpFactory
+
+<PageTitle>Add Stock Unit</PageTitle>
+
+<Alert error="@error" succes="@success"></Alert>
+<DictionaryErrors Errors="fieldErrors" />
+
+<EditForm OnSubmit="Add" Model="NewItem">
+
+    <div class="form-group">
+        <label for="CurrentPrice">Current Price</label>
+        <InputNumber id="CurrentPrice" step="0.1" @bind-Value="NewItem.CurrentPrice" class="form-control"></InputNumber>
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="Quantity">Quantity</label>
+        <InputNumber id="Quantity" @bind-Value="NewItem.Quantity" class="form-control"></InputNumber>
+    </div>
+    <br />
+    <div class="form-group">
+        <label for="Note">Note</label>
+        <InputTextArea id="Note" @bind-Value="NewItem.Note" class="form-control"></InputTextArea>
+    </div>
+    <br />
+
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
+    }
+    else
+    {
+        <button type="submit" class="btn btn-primary w-100 mb-2">Add</button>
+        <button type="button" class="btn btn-outline-secondary w-100" @onclick='() => Nav.NavigateTo($"/stockUnits/{ItemId}")'>Go Back</button>
+    }
+
+</EditForm>
+
+@code {
+    [Parameter] public int ItemId { get; set; }
+    public AddStockUnitRequest NewItem = new AddStockUnitRequest();
+
+    private Dictionary<string, List<string>> fieldErrors = new();
+    private bool isLoading = false;
+    private string? error = null;
+    private string? success = null;
+
+    private HttpClient httpClient { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        httpClient = HttpFactory.CreateClient("InventoryService");
+    }
+
+    public async Task Add()
+    {
+        isLoading = true;
+        fieldErrors = new();
+        error = null;
+        success = null;
+
+        try
+        {
+            NewItem.ItemId = ItemId;
+
+            var response = await httpClient.PostAsJsonAsync("api/stockunit/add-stock-unit", NewItem);
+            var result = await response.Content.ReadFromJsonAsync<Result<string>>();
+
+            if (result is null)
+            {
+                error = "Unexpected error, please try again.";
+                return;
+            }
+
+            if (!result.IsSuccessful)
+            {
+                fieldErrors = result.Errors!;
+                return;
+            }
+
+            NewItem = new();
+            success = result.Value!;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            error = $"{ex.Message} {ex.InnerException?.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

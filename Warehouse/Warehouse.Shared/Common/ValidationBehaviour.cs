@@ -1,26 +1,22 @@
 ﻿using FluentValidation;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Warehouse.Shared.Common
 {
-    /// TRequest = command send to handler
-    public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : notnull
-    {
-        private readonly IEnumerable<IValidator<TRequest>> _validators;
 
-        public ValidationBehaviour(IEnumerable<IValidator<TRequest>> validators)
-        {
-            _validators = validators;
-        }
+    public class ValidationBehaviour<TRequest, TResponse>
+        (IEnumerable<IValidator<TRequest>> validators) : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : notnull
+    where TResponse : IResult
+    {
+
+        /// TRequest = command send to handler
+        private readonly IEnumerable<IValidator<TRequest>> _validators = validators; /// set of validators for object
+
 
         public async Task<TResponse> Handle(TRequest request,RequestHandlerDelegate<TResponse> next,CancellationToken cancellationToken)
         {
-
-            if (!_validators.Any()) return await next(); /// no validators for this command , return handler result
+            if (!_validators.Any()) return await next(cancellationToken); /// no validators for this command , return handler result
 
             var context = new ValidationContext<TRequest>(request);
 
@@ -29,11 +25,11 @@ namespace Warehouse.Shared.Common
                 .Where(e => e != null)
                 .ToList();
 
-            if (!failures.Any()) return await next(); /// ok data
+            if (failures.Count == 0) return await next(cancellationToken); /// no error
 
-            var fail = typeof(TResponse)
-                .GetMethod("MultipleFails", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)!
-                .Invoke(null, new object[] { failures })!;
+            var fail =  /// reflection to pass Result back
+                     typeof(TResponse).GetMethod("MultipleFails", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)!
+                    .Invoke(null, [failures])!;
 
             return (TResponse)fail; /// Result or Result<T> with multiple errors
         }

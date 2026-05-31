@@ -5,11 +5,9 @@ using System.Security.Claims;
 
 namespace Warehouse.Client.Auth
 {
-    public class JwtAuthStateProvider : AuthenticationStateProvider 
+    public class JwtAuthStateProvider(ILocalStorageService localStorage) : AuthenticationStateProvider 
     {
-        private readonly ILocalStorageService _localStorage;
-
-        public JwtAuthStateProvider(ILocalStorageService localStorage) => _localStorage = localStorage;
+        private readonly ILocalStorageService _localStorage = localStorage;
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {

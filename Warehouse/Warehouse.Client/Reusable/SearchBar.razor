@@ -5,7 +5,7 @@
 </div>
 
 @code {
-    [Parameter] public string Placeholder { get; set; }
+    [Parameter] public string? Placeholder { get; set; }
     [Parameter] public EventCallback<string> PassSearchName { get; set; }
     private string? searchByName { get; set; }
 }

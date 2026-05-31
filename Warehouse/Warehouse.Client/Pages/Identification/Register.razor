@@ -15,31 +15,30 @@
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-4">
-            <h3 class="mb-4 text-center">Register</h3>
 
             <Alert error="@alertMsg"></Alert>
             <DictionaryErrors Errors="fieldErrors" />
 
-            <EditForm Model="command" OnSubmit="HandleRegister">
+            <EditForm Model="DTO" OnSubmit="HandleRegister">
                 <div class="form-group mb-3">
                     <label>Email</label>
-                    <InputText class="form-control" type="email" @bind-Value="command.Email" />
+                    <InputText class="form-control" type="email" @bind-Value="DTO.Email" />
                 </div>
 
                 <div class="form-group mb-3">
                     <label>Password</label>
-                    <InputText class="form-control" type="password" @bind-Value="command.Password" />
+                    <InputText class="form-control" type="password" @bind-Value="DTO.Password" />
                 </div>
 
                 <div class="form-group mb-3">
                     <label>Confirm Password</label>
-                    <InputText class="form-control" type="password" @bind-Value="command.ConfirmPassword" />
+                    <InputText class="form-control" type="password" @bind-Value="DTO.ConfirmPassword" />
                 </div>
 
                 <AuthorizeView Roles="Admin" Context="authContext"> @*only admin can select role*@
                     <div class="form-group mb-3">
                         <label>Account Type</label>
-                        <InputSelect @bind-Value="command.AccountType" class="form-control">
+                        <InputSelect @bind-Value="DTO.AccountType" class="form-control">
                             @foreach (var type in Enum.GetValues<AccountType>())
                             {
                                 <option value="@type">@type</option>
@@ -61,6 +60,7 @@
                     <button type="submit" class="btn btn-primary w-100 mb-2">Create Account</button>
                     <button type="button" class="btn btn-outline-secondary w-100" @onclick='() => Nav.NavigateTo("/")'>Go Back</button>
                 }
+
             </EditForm>
 
         </div>
@@ -68,11 +68,18 @@
 </div>
 
 @code {
-    private RegisterRequest command = new();
+    private RegisterRequest DTO = new();
     private Dictionary<string, List<string>> fieldErrors = new();
 
     private string? alertMsg;
     private bool isLoading = false;
+
+    private HttpClient httpClient { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        httpClient = HttpFactory.CreateClient("AccountService");
+    }
 
     private async Task HandleRegister()
     {
@@ -82,8 +89,7 @@
 
         try
         {
-            var client = HttpFactory.CreateClient("AccountService");
-            var response = await client.PostAsJsonAsync("api/account/register", command);
+            var response = await httpClient.PostAsJsonAsync("api/account/register", DTO);
             var result = await response.Content.ReadFromJsonAsync<Result>();
 
             if (result is null)
@@ -99,12 +105,13 @@
             }
 
             alertMsg = "Succesfully registered";
-            command = new();
+            DTO = new(); /// reset
 
         }
         catch (Exception ex)
         {
-            alertMsg = $"System error: {ex.Message}";
+            Console.WriteLine(ex.Message);
+            alertMsg = "System error";
         }
         finally
         {

@@ -1,32 +1,22 @@
-﻿using AutoMapper;
-using Azure.Core;
-using InventoryService.Infrastructure.DbRepository;
+﻿using InventoryService.Infrastructure.DbRepository;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 using Warehouse.Shared.Auth;
 using Warehouse.Shared.Common;
-using Warehouse.Shared.DTOs.ItemDTO;
 
 namespace InventoryService.Application.Commands
 {
-    public record DeleteItemCommand(int id) : IRequest<Result>;
+    internal record DeleteItemCommand(int Id) : IRequest<Result>;
 
-    public class DeleteItemCommandHandler : IRequestHandler<DeleteItemCommand, Result>
+
+    internal class DeleteItemCommandHandler(
+        InventoryServiceDbContext _dbContext,
+        IHttpClientFactory httpFactory,
+        CurrentUser user) : IRequestHandler<DeleteItemCommand, Result>
     {
-        private readonly InventoryServiceDbContext dbContext;
-        private readonly IHttpClientFactory _httpFactory;
-        private readonly CurrentUser _user;
-
-        public DeleteItemCommandHandler(
-            InventoryServiceDbContext _dbContext,
-            IHttpClientFactory httpFactory,
-            CurrentUser user)
-        {
-            dbContext = _dbContext;
-            _httpFactory = httpFactory;
-            _user = user;
-        }
+        private readonly InventoryServiceDbContext dbContext = _dbContext;
+        private readonly IHttpClientFactory _httpFactory = httpFactory;
+        private readonly CurrentUser _user = user;
 
         public async Task<Result> Handle(DeleteItemCommand command, CancellationToken ct)
         {
@@ -35,7 +25,7 @@ namespace InventoryService.Application.Commands
                 var item = await dbContext.Items
                     .Include(i => i.Stock)
                     .Include(i => i.StockUnits)
-                    .FirstOrDefaultAsync(i => i.Id == command.id,ct);
+                    .FirstOrDefaultAsync(i => i.Id == command.Id,ct);
 
                 if (item == null)
                 {

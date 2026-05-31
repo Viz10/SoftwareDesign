@@ -1,4 +1,5 @@
 ﻿@page "/items"
+
 @attribute [Authorize]
 
 @using Warehouse.Client.Auth
@@ -16,6 +17,7 @@
 <PageTitle>Warehouse Items</PageTitle>
 
 <Alert error="@alertMsg"></Alert>
+<DictionaryErrors Errors="fieldErrors"/>
 
 <SearchBar PassSearchName="HandleSearchByName" Placeholder="Search by name"></SearchBar>
 
@@ -37,22 +39,23 @@
 @code {
     private Dictionary<string, List<string>> fieldErrors = new();
     private string? alertMsg;
-    
+
     public string? searchByName { get; set; }
     public string? orderBy { get; set; }
-   
-    public IEnumerable<Dictionary<string, object>> CellNameValuePair { get; set; } = default!;
-    public GenericTablePlugIns Model { get; set; } = default!;
-    
+
+    public IEnumerable<Dictionary<string, object>> CellNameValuePair { get; set; } = null!;
+    public GenericTablePlugIns Model { get; set; } = null!;
+
     private List<string> Selectorder = default!;
     private List<ItemGetResponse> ExportValues = new List<ItemGetResponse>();
-
+    private HttpClient httpClient { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
         Selectorder = new List<string> {"ascending", "descending"};
-        await InitCellNameValuePairs();
+        httpClient = HttpFactory.CreateClient("InventoryService");
         InitTablePlugins();
+        await InitCellNameValuePairs();   
     }
 
     private async Task InitCellNameValuePairs()
@@ -62,8 +65,7 @@
 
         try
         {
-            var client = HttpFactory.CreateClient("InventoryService");
-            var response = await client.GetAsync($"api/item?name={searchByName}&sortBy={orderBy}");
+            var response = await httpClient.GetAsync($"api/item?name={searchByName}&sortBy={orderBy}");
             var result = await response.Content.ReadFromJsonAsync<Result<List<ItemGetResponse>>>();
 
             if (result is null)
@@ -78,19 +80,28 @@
                 return;
             }
 
-            ExportValues = result.Value!;
-            CellNameValuePair = result.Value!.Select(dto => new Dictionary<string, object>
+            if (result.Value!.Count > 0)
             {
-                ["Id"] = dto.Id,
-                ["Name"] = dto.Name,
-                ["Description"] = dto.Description ?? "",
-                ["Base Price Per Item"] = dto.ReferencePricePerItem ?? 0,
-                ["Quantity"] = dto.Quantity
-            });
+                ExportValues = result.Value!;
+                CellNameValuePair = result.Value!.Select(dto => new Dictionary<string, object>
+                {
+                    ["Id"] = dto.Id,
+                    ["Name"] = dto.Name,
+                    ["Description"] = dto.Description ?? "",
+                    ["Base Price Per Item"] = dto.ReferencePricePerItem ?? 0,
+                    ["Quantity"] = dto.Quantity
+                });
+            }
+            else
+            {
+                CellNameValuePair = new List<Dictionary<string, object>>();
+                alertMsg = "No items!";
+            }
         }
         catch(Exception ex)
         {
-            alertMsg = $"Something went wrong: {ex.Message} {ex.InnerException?.Message}";
+            Console.WriteLine(ex.Message);
+            alertMsg = $"{ex.Message} {ex.InnerException?.Message}";
         }
     }
     private void InitTablePlugins()
@@ -110,18 +121,22 @@
         alertMsg = null;
         try
         {
-            var client = HttpFactory.CreateClient("InventoryService");
-            var response = await client.GetAsync($"api/item/export-items?strategyName={format}");
-            var result = await response.Content.ReadAsStringAsync();
+            var response = await httpClient.GetAsync($"api/item/export-items?strategyName={format}");
 
-            await JS.InvokeVoidAsync("downloadFile", $"items.{format}", result);
+            response.EnsureSuccessStatusCode();
+
+            var fileBytes = await response.Content.ReadAsByteArrayAsync();
+            var base64String = Convert.ToBase64String(fileBytes);
+
+            await JS.InvokeVoidAsync("downloadFile", $"items.{format}", base64String);
         }
         catch (Exception ex)
         {
-            alertMsg = $"Something went wrong: {ex.Message} {ex.InnerException?.Message}";
+            Console.WriteLine($"{ex.Message} {ex.InnerException?.Message}");
+            alertMsg = $"{ex.Message} {ex.InnerException?.Message}";
         }
     }
-
+    
     public async Task HandleDelete(int id) {
 
         alertMsg = null;
@@ -129,8 +144,7 @@
 
         try
         {
-            var client = HttpFactory.CreateClient("InventoryService");
-            var response = await client.DeleteAsync($"api/item/delete/{id}");
+            var response = await httpClient.DeleteAsync($"api/item/delete/{id}");
             var result = await response.Content.ReadFromJsonAsync<Result>();
 
             if (result is null)
@@ -144,12 +158,13 @@
                 fieldErrors = result.Errors!;
                 return;
             }
-            /// every time the reference CellNameValuePair changes , it propagates through components to rerender where its used
+            /// every time the reference CellNameValuePair changes , it propagates through components [Parameter] to rerender where its used
             await InitCellNameValuePairs(); 
         }
         catch (Exception ex)
         {
-            alertMsg = $"Something went wrong: {ex.Message} {ex.InnerException?.Message}";
+            Console.WriteLine(ex.Message);
+            alertMsg = $"{ex.Message} {ex.InnerException?.Message}";
         }
     }
     public async Task HandleSearchByName(string? name)

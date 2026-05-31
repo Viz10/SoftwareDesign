@@ -4,37 +4,28 @@ using InventoryService.Infrastructure.DbRepository;
 using InventoryService.Infrastructure.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.Design;
 using Warehouse.Shared.Common;
-using Warehouse.Shared.DTOs.ItemDTO;
 using Warehouse.Shared.DTOs.StockUnitDTO;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace InventoryService.Application.Commands
 {
-    public record UpdateStockUnitCommand(int Id, int ItemId, decimal? CurrentPrice, string? Note, UnitStatus? Status) : IRequest<Result<StockUnitGetResponse>>;
+    internal record UpdateStockUnitCommand(int Id, int ItemId, decimal? CurrentPrice, string? Note, UnitStatus? Status) : IRequest<Result<UpdateStockUnitRequest>>;
 
-    internal class UpdateStockUnitCommandHandler : IRequestHandler<UpdateStockUnitCommand, Result<StockUnitGetResponse>>
+
+    internal class UpdateStockUnitCommandHandler(InventoryServiceDbContext _dbContext, IMapper _mapper) : IRequestHandler<UpdateStockUnitCommand, Result<UpdateStockUnitRequest>>
     {
-        private readonly InventoryServiceDbContext dbContext;
-        private readonly IMapper mapper;
+        private readonly InventoryServiceDbContext dbContext = _dbContext;
+        private readonly IMapper mapper = _mapper;
 
-        public UpdateStockUnitCommandHandler(InventoryServiceDbContext _dbContext, IMapper _mapper)
-        {
-            dbContext = _dbContext;
-            mapper = _mapper;
-        }
-
-        public async Task<Result<StockUnitGetResponse>> Handle(UpdateStockUnitCommand command, CancellationToken ct)
+        public async Task<Result<UpdateStockUnitRequest>> Handle(UpdateStockUnitCommand command, CancellationToken ct)
         {
             try
             {
-                var Old = await dbContext.StockUnits.FirstOrDefaultAsync(x => x.Id == command.Id);
+                var Old = await dbContext.StockUnits.FirstOrDefaultAsync(x => x.Id == command.Id, cancellationToken: ct);
 
                 if (Old == null)
                 {
-                    return Result<StockUnitGetResponse>.Fail("Not Found");
+                    return Result<UpdateStockUnitRequest>.Fail("Not Found");
                 }
 
                 mapper.Map(command, Old);
@@ -43,21 +34,19 @@ namespace InventoryService.Application.Commands
 
                 var result = await dbContext.StockUnits
                     .Where(x => x.Id == command.Id)
-                    .ProjectTo<StockUnitGetResponse>(mapper.ConfigurationProvider)
+                    .ProjectTo<UpdateStockUnitRequest>(mapper.ConfigurationProvider)
                     .FirstOrDefaultAsync(ct);
 
-                return Result<StockUnitGetResponse>.Success(result);
+                return Result<UpdateStockUnitRequest>.Success(result!);
             }
             catch (DbUpdateException ex)
             {
-                return Result<StockUnitGetResponse>.Fail(ex.Message);
+                return Result<UpdateStockUnitRequest>.Fail(ex.Message);
             }
             catch (Exception ex)
             {
-                return Result<StockUnitGetResponse>.Fail(ex.Message);
+                return Result<UpdateStockUnitRequest>.Fail(ex.Message);
             }
         }
     }
-
-
 }

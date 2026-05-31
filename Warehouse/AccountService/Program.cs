@@ -2,11 +2,13 @@ using AccountService.Application.Mappings;
 using AccountService.Infrastructure.DbRepository;
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using System.Reflection;
-using Warehouse.Shared.Common;
 using Warehouse.Shared.Auth;
+using Warehouse.Shared.Common;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,20 +26,23 @@ builder.Services.AddAutoMapper(cfg =>
    cfg.AddMaps(typeof(AccountMappingProfile).Assembly);
 });
 
-builder.Services.AddSharedJwtAuth(builder.Configuration);
+builder.Services.AddSharedJwtAuth(builder.Configuration); /// verify jwt
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
 
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddControllers(options =>
+{
+    var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+    options.Filters.Add(new AuthorizeFilter(policy));
+});
 builder.Services.AddOpenApi();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazor", policy =>
     {
-        policy.WithOrigins("https://localhost:7061")
+        policy.WithOrigins(builder.Configuration["BlazorURL"]!)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });

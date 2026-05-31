@@ -1,13 +1,17 @@
 ﻿@page "/view-emails"
+
+@attribute [Authorize(Roles = "Admin, Seller")]
+
+@using Microsoft.AspNetCore.Authorization
 @using Warehouse.Client.Reusable
 @using Warehouse.Shared.Common
 @using System.Net.Http.Json
+
 @inject IHttpClientFactory HttpFactory
 
 <PageTitle>Warehouse Account Emails</PageTitle>
 
 <div class="container mt-4">
-    <h3>Warehouse Account Emails</h3>
     
     <Alert error="@alertMsg"></Alert>
     <DictionaryErrors Errors="fieldErrors" />
@@ -43,14 +47,17 @@
 </div>
 
 @code {
-    private List<string> emailList = new();
+    private List<string>? emailList = null;
     private Dictionary<string, List<string>> fieldErrors = new();
 
     private string? alertMsg;
     private bool isLoading = false;
 
+    private HttpClient httpClient { get; set; } = null!;
+
     protected override async Task OnInitializedAsync()
     {
+        httpClient = HttpFactory.CreateClient("AccountService");
         await LoadEmails();
     }
 
@@ -62,8 +69,7 @@
 
         try
         {
-            var client = HttpFactory.CreateClient("AccountService");
-            var response = await client.GetAsync("api/account/emails");
+            var response = await httpClient.GetAsync("api/account/emails");
             var result = await response.Content.ReadFromJsonAsync<Result<List<string>>>();
 
             if (result is null)
@@ -78,11 +84,12 @@
                 return;
             }
 
-            emailList = result.Value;
+            emailList = result.Value!;
         }
         catch (Exception ex)
         {
-            alertMsg = $"Something went wrong: {ex.Message} {ex.InnerException?.Message}";
+            Console.WriteLine(ex.Message);
+            alertMsg = "Something went wrong";
         }
         finally
         {

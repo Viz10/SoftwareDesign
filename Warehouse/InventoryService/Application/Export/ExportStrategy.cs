@@ -11,7 +11,6 @@
                 "XML" => new XmlExporter<T>(),
                 _ => throw new NotImplementedException(),
             };
-
             return await exporter.Export(data);
         }
     }

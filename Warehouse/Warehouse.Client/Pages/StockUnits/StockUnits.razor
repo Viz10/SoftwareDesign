@@ -1,1 +1,196 @@
-﻿@page "/StockUnits/{ItemId:int}"
+﻿﻿
+@page "/stockUnits/{ItemId:int}"
+@attribute [Authorize(Roles = "Admin, Seller")]
+
+@using Warehouse.Client.Auth
+@using Warehouse.Client.Reusable
+@using Warehouse.Shared.DTOs.StockUnitDTO
+@using Microsoft.AspNetCore.Authorization
+@using Warehouse.Shared.Common
+
+@inject IHttpClientFactory HttpFactory
+@inject NavigationManager Nav
+@inject JwtAuthStateProvider AuthProvider
+@inject IJSRuntime JS
+
+@if(_name is not null)
+{
+    <h1>Warehouse Shelf Items for @_name</h1>
+}
+
+<Alert error="@alertMsg"></Alert>
+<DictionaryErrors Errors="fieldErrors"/>
+
+<br/>
+<SearchBar PassSearchName="HandleSearchByBarcode" Placeholder="Search by barcode"></SearchBar>
+
+<GenericTable Model="@Model" CellNameValuePair="@CellNameValuePair"></GenericTable>
+
+<br/>
+
+<ExportButtons eventCallback="Export"></ExportButtons>
+
+
+@code {
+    [Parameter] public int ItemId { get; set; }
+
+    private Dictionary<string, List<string>> fieldErrors = new();
+    private string? alertMsg;
+    private string? _name { get; set; } = null;
+
+    public string? searchByBarcode { get; set; }
+
+    private List<StockUnitGetResponse> ExportValues = new List<StockUnitGetResponse>();
+    private HttpClient httpClient { get; set; } = null!;
+
+    public IEnumerable<Dictionary<string, object>> CellNameValuePair { get; set; } = null!;
+    public GenericTablePlugIns Model { get; set; } = null!;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        httpClient = HttpFactory.CreateClient("InventoryService");
+
+        alertMsg = null;
+        fieldErrors = new();
+
+        try
+        {
+            var response = await httpClient.GetAsync($"api/item/Name/{ItemId}");
+            var result = await response.Content.ReadFromJsonAsync<Result<string>>();
+
+            if (string.IsNullOrEmpty(result!.Value))
+            {
+                Console.Write("Unexpected error, please try again.\n");
+                return;
+            }
+            _name = result.Value;
+
+            InitTablePlugins();
+
+            await InitList();
+
+        }
+        catch (Exception ex)
+        {
+            Console.Write($"{ex.Message}\n");
+            alertMsg = ex.Message;
+        }
+    }
+
+    public void InitTablePlugins()
+    {
+        Model = new GenericTablePlugIns()
+        {
+            TableTitle = "Shelf items Table",
+            ColumnNames = new List<string> { "Id", "Name", "Note", "Current Price", "Serial Number", "Status" },
+            EditBasePagePath = $"/stockUnits/{ItemId}/edit",
+            AddPagePath = $"/stockUnits/add/{ItemId}",
+            OnDeleteCallback = EventCallback.Factory.Create<int>(this, HandleDelete),
+            //ExtraActions = new List<(string ButtonLabel, EventCallback<int> Action)> { ("Ship to customer", EventCallback.Factory.Create<int>(this, (id) => Nav.NavigateTo($"/Shipping/{id}"))) }
+        };
+    }
+    public async Task InitList()
+    {
+        alertMsg = null;
+        fieldErrors = new();
+
+        try
+        {
+            var response = await httpClient.GetAsync($"api/stockunit?itemId={ItemId}&barcode={searchByBarcode}");
+            var result = await response.Content.ReadFromJsonAsync<Result<List<StockUnitGetResponse>>>();
+
+            if (result is null)
+            {
+                alertMsg = "Unexpected error, please try again.";
+                return;
+            }
+
+            if (!result.IsSuccessful)
+            {
+                fieldErrors = result.Errors!;
+                return;
+            }
+
+            if (result.Value!.Count > 0)
+            {
+                ExportValues = result.Value;
+                CellNameValuePair = result.Value!.Select(dto => new Dictionary<string, object>
+                {
+                    ["Id"] = dto.Id,
+                    ["Name"] = dto.Name,
+                    ["Note"] = dto.Note ?? "",
+                    ["Current Price"] = dto.CurrentPrice ?? 0,
+                    ["Serial Number"] = dto.SerialNumber,
+                    ["Status"] = dto.Status.ToString()
+                });
+            }
+            else
+            {
+                CellNameValuePair = new List<Dictionary<string, object>>();
+                alertMsg = "No stock units!";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            alertMsg = "Something went wrong";
+        }
+    }
+
+    public async Task HandleDelete(int id)
+    {
+        alertMsg = null;
+        fieldErrors = new();
+
+        try
+        {
+            var response = await httpClient.DeleteAsync($"api/stockunit/delete/{id}");
+            var result = await response.Content.ReadFromJsonAsync<Result<bool>>();
+
+            if (result is null)
+            {
+                alertMsg = "Unexpected error, please try again.";
+                return;
+            }
+
+            if (!result.IsSuccessful)
+            {
+                fieldErrors = result.Errors!;
+                return;
+            }
+            await InitList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            alertMsg = "Something went wrong";
+        }
+    }
+    public async Task HandleSearchByBarcode(string? barcode)
+    {
+        searchByBarcode = barcode;
+        await InitList();
+    }
+    
+    
+    private async Task Export(string format)
+    {
+        alertMsg = null;
+        try
+        {
+            var response = await httpClient.GetAsync($"api/stockunit/export-stockunits?strategyName={format}&itemId={ItemId}");
+
+            response.EnsureSuccessStatusCode();
+
+            var fileBytes = await response.Content.ReadAsByteArrayAsync();
+            var base64String = Convert.ToBase64String(fileBytes);
+
+            await JS.InvokeVoidAsync("downloadFile", $"items.{format}", base64String);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"{ex.Message} {ex.InnerException?.Message}");
+            alertMsg = $"{ex.Message} {ex.InnerException?.Message}";
+        }
+    }
+}

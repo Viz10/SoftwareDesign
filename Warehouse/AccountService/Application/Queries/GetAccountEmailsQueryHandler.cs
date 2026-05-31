@@ -1,28 +1,19 @@
 ﻿using AccountService.Infrastructure.DbRepository;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
-using Microsoft.Identity.Client;
-using System.Security.Claims;
 using Warehouse.Shared.Auth;
 using Warehouse.Shared.Common;
-using Warehouse.Shared.DTOs.AccountDTO;
 
 namespace AccountService.Application.Queries
 {
-    public record GetAccountEmailsQuery() : IRequest<Result<List<string>>>;
+    internal record GetAccountEmailsQuery() : IRequest<Result<List<string>>>;
 
-    public class GetAccountEmailsQueryHandler : IRequestHandler<GetAccountEmailsQuery,Result<List<string>>>
+    internal class GetAccountEmailsQueryHandler(AccountServiceDbContext dbContext, CurrentUser currentUser) : IRequestHandler<GetAccountEmailsQuery,Result<List<string>>>
     {
-        AccountServiceDbContext _dbContext;
-        CurrentUser _currentUser;
-        public GetAccountEmailsQueryHandler(AccountServiceDbContext dbContext,CurrentUser currentUser)
-        {
-           _dbContext = dbContext;
-            _currentUser  = currentUser;
-        }
+        private readonly AccountServiceDbContext _dbContext = dbContext;
+        private readonly CurrentUser _currentUser = currentUser;
 
-        public async Task<Result<List<string>>> Handle(GetAccountEmailsQuery request, CancellationToken ct)
+        public async Task<Result<List<string>>> Handle(GetAccountEmailsQuery _ , CancellationToken ct)
         {
             var accountId = _currentUser.Id;
 

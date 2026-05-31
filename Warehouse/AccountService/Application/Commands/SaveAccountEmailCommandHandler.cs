@@ -1,22 +1,17 @@
 ﻿using AccountService.Infrastructure.DbRepository;
 using AccountService.Infrastructure.Entities;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Warehouse.Shared.Common;
+using MediatR;
 
 namespace AccountService.Application.Commands
 {
-    public record SaveAccountEmailCommand(string AccountEmail,string Content) : IRequest<Result>;
+    internal record SaveAccountEmailCommand(string AccountEmail,string Content) : IRequest<Result>;
 
-    public class SaveAccountEmailCommandHandler: IRequestHandler<SaveAccountEmailCommand, Result>
+
+    internal class SaveAccountEmailCommandHandler(AccountServiceDbContext dbContext) : IRequestHandler<SaveAccountEmailCommand, Result>
     {
-        private readonly AccountServiceDbContext _dbContext;
-
-        public SaveAccountEmailCommandHandler(AccountServiceDbContext dbContext)
-        {
-            _dbContext = dbContext;
-        }
-
+        private readonly AccountServiceDbContext _dbContext = dbContext;
         public async Task<Result> Handle(SaveAccountEmailCommand cmd, CancellationToken ct)
         {
             var account = await _dbContext.Accounts

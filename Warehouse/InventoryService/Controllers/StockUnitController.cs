@@ -3,24 +3,18 @@ using InventoryService.Application.Commands;
 using InventoryService.Application.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Warehouse.Shared.DTOs.StockUnitDTO;
 
 namespace InventoryService.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
-    public class StockUnitController : ControllerBase
+    public class StockUnitController(IMediator _mediator, IMapper _mapper) : ControllerBase
     {
-        private readonly IMediator mediator;
-        private readonly IMapper mapper;
-
-        public StockUnitController(IMediator _mediator, IMapper _mapper)
-        {
-            mediator = _mediator;
-            mapper = _mapper;
-        }
+        private readonly IMediator mediator = _mediator;
+        private readonly IMapper mapper = _mapper;
 
         /// COMMANDS
 
@@ -29,9 +23,7 @@ namespace InventoryService.Controllers
         public async Task<IActionResult> AddStockUnit([FromBody] AddStockUnitRequest addStockUnitRequest, CancellationToken cancellationToken)
         {
             AddStockUnitCommand command = mapper.Map<AddStockUnitCommand>(addStockUnitRequest);
-
             var result = await mediator.Send(command, cancellationToken);
-
             return result.IsSuccessful ? Ok(result) : BadRequest(result);
         }
 
@@ -40,9 +32,7 @@ namespace InventoryService.Controllers
         public async Task<IActionResult> UpdateItem([FromBody] UpdateStockUnitRequest updateStockUnitRequest, CancellationToken cancellationToken)
         {
             UpdateStockUnitCommand command = mapper.Map<UpdateStockUnitCommand>(updateStockUnitRequest);
-
             var result = await mediator.Send(command, cancellationToken);
-
             return result.IsSuccessful ? Ok(result) : BadRequest(result);
         }
 
@@ -57,17 +47,26 @@ namespace InventoryService.Controllers
         /// QUERIES
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] string? barcode, CancellationToken cancellationToken)
+        [Authorize(Roles = "Admin,Seller")]
+        public async Task<IActionResult> GetAll([FromQuery] int itemId,[FromQuery] string? barcode, CancellationToken cancellationToken)
         {
-            var result = await mediator.Send(new GetEveryStockUnitQuery(barcode), cancellationToken);
+            var result = await mediator.Send(new GetEveryStockUnitQuery(itemId,barcode), cancellationToken);
             return result.IsSuccessful ? Ok(result) : NotFound(result);
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> GetById([FromRoute] int id, CancellationToken cancellationToken)
         {
             var result = await mediator.Send(new GetStockUnitQuery(id), cancellationToken);
             return result.IsSuccessful ? Ok(result) : NotFound(result);
+        }
+
+        [HttpGet("export-stockunits")]
+        public async Task<IActionResult> GetExportedStockUnits([FromQuery] string strategyName, [FromQuery] int itemId, CancellationToken cancellationToken)
+        {
+            var result = await mediator.Send(new ExportStockUnitsQuery(strategyName, itemId), cancellationToken);
+            return !string.IsNullOrEmpty(result) ? Ok(result) : NotFound("Error exporting items!");
         }
     }
 }

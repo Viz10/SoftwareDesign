@@ -4,17 +4,12 @@
     {
         public abstract string StrategyName { get; }
 
-        public async Task<string> Export(List<T> data)
+        public async Task<string> Export(List<T> data) /// gets raw data => formated string
         {
             var transformed = await Transform(data);  
-            return WriteOutput(transformed);    
+            return transformed;    
         }
 
-        protected abstract Task<string> Transform(List<T> data);
-
-        private string WriteOutput(string content)
-        {
-            return content;
-        }
+        protected abstract Task<string> Transform(List<T> data); /// to be implemented by children class
     }
 }

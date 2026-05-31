@@ -3,31 +3,24 @@ using InventoryService.Application.Commands;
 using InventoryService.Application.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Globalization;
 using Warehouse.Shared.DTOs.ItemDTO;
 
 namespace InventoryService.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
-    public class ItemController : ControllerBase
+    public class ItemController(IMediator _mediator, IMapper _mapper) : ControllerBase
     {
 
-        private readonly IMediator mediator;
-        private readonly IMapper mapper;
-
-        public ItemController(IMediator _mediator, IMapper _mapper)
-        {
-            mediator = _mediator;
-            mapper = _mapper;
-        }
+        private readonly IMediator mediator = _mediator;
+        private readonly IMapper mapper = _mapper;
 
         /// COMMANDS
 
         [HttpPost("add-item")]
-        //[Authorize(Roles = "Admin,Seller")]
+        [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> AddItem([FromBody] AddItemRequest addItemRequest, CancellationToken cancellationToken)
         {
             AddItemCommand command = mapper.Map<AddItemCommand>(addItemRequest);
@@ -36,7 +29,7 @@ namespace InventoryService.Controllers
         }
         
         [HttpPut("update-item")]
-        //[Authorize(Roles = "Admin,Seller")]
+        [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> UpdateItem([FromBody] UpdateItemRequest updateItemRequest, CancellationToken cancellationToken)
         {
             UpdateItemCommand command = mapper.Map<UpdateItemCommand>(updateItemRequest);
@@ -45,7 +38,7 @@ namespace InventoryService.Controllers
         }
         
         [HttpDelete("delete/{id}")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteItem([FromRoute] int id, CancellationToken cancellationToken)
         {
             var result = await mediator.Send(new DeleteItemCommand(id), cancellationToken);
@@ -62,7 +55,6 @@ namespace InventoryService.Controllers
         }
 
         [HttpGet("{id}")]
-       // [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> GetById([FromRoute] int id, CancellationToken cancellationToken)
         {
             var result = await mediator.Send(new GetItemQuery(id), cancellationToken);
@@ -70,7 +62,6 @@ namespace InventoryService.Controllers
         }
 
         [HttpGet("Name/{id}")]
-       // [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> GetNameById([FromRoute] int id, CancellationToken cancellationToken)
         {
             var result = await mediator.Send(new GetStockUnitItemNameQuery(id), cancellationToken);

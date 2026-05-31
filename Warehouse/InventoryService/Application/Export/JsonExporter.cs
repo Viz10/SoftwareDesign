@@ -14,6 +14,5 @@ namespace InventoryService.Application.Export
                 return JsonSerializer.Serialize(data, context);
             });
         }
-
     }
 }
