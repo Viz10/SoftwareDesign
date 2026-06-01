@@ -1,5 +1,8 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+@using Warehouse.Client.Resources
+@inject IStringLocalizer<SharedResource> Loc
 
-<h1>Welcome to Warehouse Management</h1>
+<PageTitle>@Loc["Home"]</PageTitle>
+
+<h1>@Loc["Welcome"]</h1>

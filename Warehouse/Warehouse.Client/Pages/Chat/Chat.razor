@@ -6,6 +6,9 @@
 @inject ILocalStorageService _localStorage
 @inject IConfiguration configuration
 
+@using Warehouse.Client.Resources
+@inject IStringLocalizer<SharedResource> Loc
+
 @implements IAsyncDisposable
 
 <PageTitle>Warehouse Chat</PageTitle>
@@ -19,7 +22,7 @@ else
     <div class="chat-messages" style="height:400px; overflow-y:auto; border:1px solid #ccc; padding:8px;">
         @foreach (var msg in messages)
         {
-            <div style="margin-bottom:8px;">
+            <div style="margin-bottom:8px; white-space: pre-wrap;">
                 <strong>@msg</strong>
             </div>
         }
@@ -28,7 +31,7 @@ else
     <div style="margin-top:8px; display:flex; gap:8px;">
         <InputText placeholder="type user" @bind-Value="user"></InputText>
         <InputText placeholder="type message" @bind-Value="inputMessage"></InputText>
-        <button class="btn btn-success" type="button" @onclick=Send>Send</button>
+        <button class="btn btn-success" type="button" @onclick=Send>@Loc["SendMessage"]</button>
     </div>
 }
 
@@ -57,7 +60,7 @@ else
         /// registers a listener for server broadcasts
         hub.On<string, string>("ReceiveMessage", (userInput, messageInput) =>
         {
-            var displayMsg = $"{userInput}: {messageInput}";
+            var displayMsg = $"{userInput}: {messageInput}\n{DateTimeOffset.UtcNow}";
             messages.Add(displayMsg);
             StateHasChanged();
         });

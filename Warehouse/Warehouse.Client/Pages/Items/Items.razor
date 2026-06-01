@@ -9,12 +9,15 @@
 @using Microsoft.AspNetCore.Authorization
 @using Warehouse.Shared.Common
 
+@using Warehouse.Client.Resources
+@inject IStringLocalizer<SharedResource> Loc
+
 @inject IHttpClientFactory HttpFactory
 @inject NavigationManager Nav
 @inject JwtAuthStateProvider AuthProvider
 @inject IJSRuntime JS
 
-<PageTitle>Warehouse Items</PageTitle>
+<PageTitle>@Loc["Items"]</PageTitle>
 
 <Alert error="@alertMsg"></Alert>
 <DictionaryErrors Errors="fieldErrors"/>

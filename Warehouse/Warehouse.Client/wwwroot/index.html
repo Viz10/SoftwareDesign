@@ -28,8 +28,17 @@
         <a href="." class="reload">Reload</a>
         <span class="dismiss">🗙</span>
     </div>
+
     <script src="/js/downloadFile.js"></script>
-    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js" autostart="false"></script>
+    <script>
+        const culture = localStorage.getItem('culture') || 'en';
+        document.documentElement.lang = culture;
+        Blazor.start({
+            applicationCulture: localStorage.getItem('culture') || 'en'
+        });
+    </script>
+
 </body>
 
 </html>

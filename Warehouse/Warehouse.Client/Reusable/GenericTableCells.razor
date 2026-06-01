@@ -2,6 +2,8 @@
 @using Warehouse.Client.Models
 @inject NavigationManager Nav
 
+@using Warehouse.Client.Resources
+@inject IStringLocalizer<SharedResource> Loc
 
 @foreach (var cell in CellNameValuePair)
 {
@@ -15,7 +17,7 @@
             <td>
                 <button class="btn btn-sm btn-outline-danger"
                         @onclick='() => Model.OnDeleteCallback.InvokeAsync(currentId)'>
-                    Delete
+                    @Loc["Delete"]
                 </button>
             </td>
         </AuthorizeView>
@@ -23,7 +25,7 @@
             <AuthorizeView Roles="Admin,Seller">
                 <button class="btn btn-sm btn-outline"
                         @onclick='() => Nav.NavigateTo(Model.EditBasePagePath + $"/{currentId}")'>
-                    Edit
+                    @Loc["Edit"]
                 </button>
             </AuthorizeView>
         </td>

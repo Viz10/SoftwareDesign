@@ -4,10 +4,14 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Warehouse.Client;
 using Warehouse.Client.Auth;
+using Warehouse.Client.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
+
+builder.Services.AddLocalization(options => options.ResourcesPath = "");
+builder.Services.AddScoped<CultureService>();
 
 // JWT Storage
 builder.Services.AddBlazoredLocalStorage();

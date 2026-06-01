@@ -11,8 +11,10 @@
 @inject IHttpClientFactory HttpFactory
 @inject NavigationManager Nav
 
+@using Warehouse.Client.Resources
+@inject IStringLocalizer<SharedResource> Loc
 
-<PageTitle>Edit Item</PageTitle>
+<PageTitle>@Loc["Edit"] @Loc["Items"]</PageTitle>
 
 <Alert error="@error" succes="@succes"></Alert>
 <DictionaryErrors Errors="fieldErrors" />
@@ -43,8 +45,8 @@
     }
     else
     {
-        <button type="submit" class="btn btn-primary w-100 mb-2">Edit</button>
-        <button type="button" class="btn btn-outline-secondary w-100" @onclick='() => Nav.NavigateTo("/Items")'>Go Back</button>
+        <button type="submit" class="btn btn-primary w-100 mb-2">@Loc["Save"] </button>
+        <button type="button" class="btn btn-outline-secondary w-100" @onclick='() => Nav.NavigateTo("/Items")'>@Loc["Cancel"]</button>
     }
 
 </EditForm>

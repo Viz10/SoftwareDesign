@@ -10,7 +10,10 @@
 @inject NavigationManager Nav
 @inject IHttpClientFactory HttpFactory
 
-<PageTitle>Edit Stock Unit</PageTitle>
+@using Warehouse.Client.Resources
+@inject IStringLocalizer<SharedResource> Loc
+
+<PageTitle>@Loc["Edit"] Stock Unit</PageTitle>
 
 <Alert error="@error" succes="@succes"></Alert>
 <DictionaryErrors Errors="fieldErrors" />
@@ -46,8 +49,8 @@
     }
     else
     {
-        <button type="submit" class="btn btn-primary w-100 mb-2">Edit</button>
-        <button type="button" class="btn btn-outline-secondary w-100" @onclick='() => Nav.NavigateTo($"/stockUnits/{ItemId}")'>Go Back</button>
+        <button type="submit" class="btn btn-primary w-100 mb-2">@Loc["Save"]</button>
+        <button type="button" class="btn btn-outline-secondary w-100" @onclick='() => Nav.NavigateTo($"/stockUnits/{ItemId}")'>@Loc["Cancel"]</button>
     }
 
 </EditForm>

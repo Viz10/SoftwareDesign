@@ -1,0 +1,14 @@
+﻿@using Warehouse.Client.Services
+@inject CultureService CultureService
+
+<div class="language-switcher">
+    <button @onclick='() => ChangeLanguage("en")'>EN</button>
+    <button @onclick='() => ChangeLanguage("ro")'>RO</button>
+</div>
+
+@code {
+    async Task ChangeLanguage(string culture)
+    {
+        await CultureService.SetCultureAsync(culture);
+    }
+}

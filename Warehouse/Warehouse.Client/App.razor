@@ -1,14 +1,36 @@
-﻿<CascadingAuthenticationState>
-    <Router AppAssembly="typeof(App).Assembly">
-        <Found Context="routeData">
-            <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
-                <NotAuthorized>
-                    <p>Not authorized. <a href="/login">Login</a></p>
-                </NotAuthorized>
-            </AuthorizeRouteView>
-        </Found>
-        <NotFound>
-            <p>Page not found.</p>
-        </NotFound>
-    </Router>
-</CascadingAuthenticationState>
+﻿@using Warehouse.Client.Services
+@using Warehouse.Client.Resources
+@inject CultureService CultureService
+@inject IStringLocalizer<SharedResource> Loc
+
+@if (_ready)
+{
+    <CascadingAuthenticationState>
+        <Router AppAssembly="typeof(App).Assembly">
+            <Found Context="routeData">
+                <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
+                    <NotAuthorized>
+                        <p>@Loc["Error_Unauthorized"]<a href="/login">@Loc["Login"]</a></p>
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+            </Found>
+            <NotFound>
+                <p>@Loc["Error_NotFound"]</p>
+            </NotFound>
+        </Router>
+    </CascadingAuthenticationState>
+}
+else
+{
+    <div class="loading-progress-text">@Loc["Loading"]...</div>
+}
+
+@code {
+    private bool _ready;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CultureService.LoadCultureAsync();
+        _ready = true;
+    }
+}

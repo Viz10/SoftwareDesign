@@ -25,12 +25,12 @@ namespace InventoryService.Application.Queries
 
                 if (!string.IsNullOrWhiteSpace(get_query.Name) && get_query.Name.Length >= 2)
                 {
-                    dbQuery = dbQuery.Where(item => item.Name.Contains(get_query.Name, StringComparison.CurrentCultureIgnoreCase));
+                    dbQuery = dbQuery.Where(item => item.Name.ToLower().Contains(get_query.Name.ToLower()));
                 }
 
                 if (!string.IsNullOrWhiteSpace(get_query.SortBy))
                 {
-                    dbQuery = get_query.SortBy.Equals("descending", StringComparison.OrdinalIgnoreCase)
+                    dbQuery = get_query.SortBy.Equals("descending")
                         ? dbQuery.OrderByDescending(el => el.Name)
                         : dbQuery.OrderBy(el => el.Name);
                 }
